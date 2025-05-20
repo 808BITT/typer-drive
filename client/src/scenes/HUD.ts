@@ -30,6 +30,10 @@ export class HUD {
     goalFill?: Phaser.GameObjects.Graphics;
     goalBarWidth: number = 300;
 
+    // Combo and health display
+    private comboText?: Phaser.GameObjects.Text;
+    private healthText?: Phaser.GameObjects.Text;
+
     // Animation properties
     private progressTween?: Phaser.Tweens.Tween;
     private particleEmitter?: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -148,6 +152,22 @@ export class HUD {
         this.goalFill = this.scene.add.graphics();
         this.goalBarWidth = barWidth;
 
+        // Combo and health text
+        this.comboText = this.scene.add.text(40, 20, 'Combo: 0', {
+            fontFamily: 'Arial',
+            fontSize: '24px',
+            color: '#fff',
+            stroke: '#222',
+            strokeThickness: 3
+        });
+        this.healthText = this.scene.add.text(this.width - 180, 20, 'Health: 100', {
+            fontFamily: 'Arial',
+            fontSize: '24px',
+            color: '#fff',
+            stroke: '#222',
+            strokeThickness: 3
+        });
+
         // Animated glow for goal text
         if (this.goalText) {
             this.scene.tweens.add({
@@ -195,6 +215,8 @@ export class HUD {
         this.accuracyFill?.destroy();
         this.goalBar?.destroy();
         this.goalFill?.destroy();
+        this.comboText?.destroy();
+        this.healthText?.destroy();
     }
 
     private setupParticles() {
@@ -329,6 +351,60 @@ export class HUD {
                     this.goalFill?.fillRect(this.width - 180, this.height - 45, target.width, 16);
                 }
             });
+        }
+    }
+
+    // Add combo and health update methods
+    public updateCombo(combo: number) {
+        if (!this.comboText) return;
+        this.comboText.setText(`Combo: ${combo}`);
+        // Optionally, animate comboText for effect
+        this.scene.tweens.add({
+            targets: this.comboText,
+            scale: 1.2,
+            yoyo: true,
+            duration: 120,
+            onComplete: () => this.comboText!.setScale(1)
+        });
+    }
+
+    public updateHealth(health: number) {
+        if (!this.healthText) return;
+        this.healthText.setText(`Health: ${health}`);
+        // Optionally, flash red if health drops
+        if (health <= 30) {
+            this.healthText.setColor('#ff4444');
+        } else {
+            this.healthText.setColor('#fff');
+        }
+    }
+
+    public showGameOver(score: number, maxCombo: number) {
+        const { width, height } = this.scene.scale;
+        this.scene.add.text(width / 2, height / 2, `Game Over!\nScore: ${score}\nMax Combo: ${maxCombo}`, {
+            fontFamily: 'Arial',
+            fontSize: '40px',
+            color: '#fff',
+            align: 'center',
+            stroke: '#222',
+            strokeThickness: 4
+        }).setOrigin(0.5);
+    }
+
+    // Add updateScore for GameScene compatibility
+    public updateScore(score: number) {
+        if (!this.scene || !this.scene.add) return;
+        if (!this.comboText) {
+            // Place score on left, combo in center, health on right
+            this.comboText = this.scene.add.text(40, this.height - 90, `Score: ${score}`, {
+                fontFamily: 'Arial Black',
+                fontSize: '22px',
+                color: '#fff',
+                stroke: '#000',
+                strokeThickness: 4
+            }).setOrigin(0, 0.5);
+        } else {
+            this.comboText.setText(`Score: ${score}`);
         }
     }
 

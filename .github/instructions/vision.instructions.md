@@ -1,3 +1,7 @@
+---
+applyTo: "**"
+---
+
 1. Project Vision & Scope
 
 The Space Typing Adventure is a browser-based, Phaser-powered touch-typing game with a space theme, teaching finger-specific lessons through gamified levels and boss fights

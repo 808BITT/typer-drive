@@ -2,12 +2,17 @@
 // Auto-generated on 2025-05-19
 
 import { World1Index } from '@/levels/World1Index';
+import { World2Middle } from '@/levels/World2Middle';
+import { World3Ring } from '@/levels/World3Ring';
+import { World4Pinky } from '@/levels/World4Pinky';
 import { getProgression } from '@/types';
 import Phaser from 'phaser';
 
 const worlds = [
     World1Index,
-    // TODO: Add other worlds (Middle, Ring, Pinky) when ready
+    World2Middle,
+    World3Ring,
+    World4Pinky,
 ];
 
 /**

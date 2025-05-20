@@ -14,29 +14,29 @@ export const World4Pinky: WorldConfig = {
         {
             id: 'pinky-1-1',
             name: 'A & ; (Home Row)',
-            letters: ['A', ';'],
+            letters: ['a', ';'],
             boss: false
         },
         {
             id: 'pinky-1-2',
             name: 'Add Q & P (Top Row)',
-            letters: ['A', ';', 'Q', 'P'],
+            letters: ['a', ';', 'q', 'p'],
             boss: false
         },
         {
             id: 'pinky-1-3',
             name: 'Add Z & / (Bottom Row)',
-            letters: ['A', ';', 'Q', 'P', 'Z', '/'],
+            letters: ['a', ';', 'q', 'p', 'z', '/'],
             boss: false
         },
         {
             id: 'pinky-1-4',
             name: 'Mix with Other Fingers',
             letters: [
-                'A', ';', 'Q', 'P', 'Z', '/', "'", // pinky
-                'S', 'L', 'W', 'O', 'X', '.',      // ring
-                'D', 'K', 'E', 'I', 'C', ',',      // middle
-                'F', 'J', 'G', 'H', 'R', 'U', 'T', 'Y', 'V', 'B', 'N', 'M' // index
+                'a', ';', 'q', 'p', 'z', '/', "'", // pinky
+                's', 'l', 'w', 'o', 'x', '.',      // ring
+                'd', 'k', 'e', 'i', 'c', ',',      // middle
+                'f', 'j', 'g', 'h', 'r', 'u', 't', 'y', 'v', 'b', 'n', 'm' // index
             ],
             boss: false
         },
@@ -44,12 +44,11 @@ export const World4Pinky: WorldConfig = {
             id: 'pinky-1-5',
             name: 'Shift & Capitals',
             letters: [
-                'A', ';', 'Q', 'P', 'Z', '/', "'",
-                'S', 'L', 'W', 'O', 'X', '.',
-                'D', 'K', 'E', 'I', 'C', ',',
-                'F', 'J', 'G', 'H', 'R', 'U', 'T', 'Y', 'V', 'B', 'N', 'M',
-                // Add uppercase for practice
-                'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'Z', 'X', 'C', 'V', 'B', 'N', 'M'
+                'a', ';', 'q', 'p', 'z', '/', "'",
+                's', 'l', 'w', 'o', 'x', '.',
+                'd', 'k', 'e', 'i', 'c', ',',
+                'f', 'j', 'g', 'h', 'r', 'u', 't', 'y', 'v', 'b', 'n', 'm'
+                // Remove uppercase for now
             ],
             boss: false
         },
@@ -57,14 +56,14 @@ export const World4Pinky: WorldConfig = {
             id: 'pinky-1-boss',
             name: 'Boss: Final Alien Warlord',
             letters: [
-                'A', ';', 'Q', 'P', 'Z', '/', "'",
-                'S', 'L', 'W', 'O', 'X', '.',
-                'D', 'K', 'E', 'I', 'C', ',',
-                'F', 'J', 'G', 'H', 'R', 'U', 'T', 'Y', 'V', 'B', 'N', 'M',
-                // All uppercase
-                'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'Z', 'X', 'C', 'V', 'B', 'N', 'M'
+                'a', ';', 'q', 'p', 'z', '/', "'",
+                's', 'l', 'w', 'o', 'x', '.',
+                'd', 'k', 'e', 'i', 'c', ',',
+                'f', 'j', 'g', 'h', 'r', 'u', 't', 'y', 'v', 'b', 'n', 'm'
+                // Remove uppercase for now
             ],
             boss: true
         }
     ]
 };
+// Contains AI-generated edits.

@@ -7,7 +7,7 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "phaser": "^3.60.0"
+        "phaser": "^3.88.2"
     },
     "devDependencies": {
         "@types/node": "^22.15.19",

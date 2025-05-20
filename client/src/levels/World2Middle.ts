@@ -14,32 +14,33 @@ export const World2Middle: WorldConfig = {
         {
             id: 'middle-1-1',
             name: 'D & K (Home Row)',
-            letters: ['D', 'K'],
+            letters: ['d', 'k'],
             boss: false
         },
         {
             id: 'middle-1-2',
             name: 'Add E & I (Top Row)',
-            letters: ['D', 'K', 'E', 'I'],
+            letters: ['d', 'k', 'e', 'i'],
             boss: false
         },
         {
             id: 'middle-1-3',
             name: 'Add C & , (Bottom Row)',
-            letters: ['D', 'K', 'E', 'I', 'C', ','],
+            letters: ['d', 'k', 'e', 'i', 'c', ','],
             boss: false
         },
         {
             id: 'middle-1-4',
             name: 'Mix with Index Letters',
-            letters: ['D', 'K', 'E', 'I', 'C', ',', 'F', 'J', 'G', 'H', 'R', 'U', 'T', 'Y', 'V', 'B', 'N', 'M'],
+            letters: ['d', 'k', 'e', 'i', 'c', ',', 'f', 'j', 'g', 'h', 'r', 'u', 't', 'y', 'v', 'b', 'n', 'm'],
             boss: false
         },
         {
             id: 'middle-1-boss',
             name: 'Boss: Index & Middle Challenge',
-            letters: ['D', 'K', 'E', 'I', 'C', ',', 'F', 'J', 'G', 'H', 'R', 'U', 'T', 'Y', 'V', 'B', 'N', 'M'],
+            letters: ['d', 'k', 'e', 'i', 'c', ',', 'f', 'j', 'g', 'h', 'r', 'u', 't', 'y', 'v', 'b', 'n', 'm'],
             boss: true
         }
     ]
 };
+// Contains AI-generated edits.

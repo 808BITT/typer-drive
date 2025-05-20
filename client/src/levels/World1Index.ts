@@ -14,38 +14,39 @@ export const World1Index: WorldConfig = {
         {
             id: 'index-1-1',
             name: 'F & J (Home Row)',
-            letters: ['F', 'J'],
+            letters: ['f', 'j'],
             boss: false
         },
         {
             id: 'index-1-2',
             name: 'Add G & H',
-            letters: ['F', 'J', 'G', 'H'],
+            letters: ['f', 'j', 'g', 'h'],
             boss: false
         },
         {
             id: 'index-1-3',
             name: 'Add R & U (Top Row)',
-            letters: ['F', 'J', 'G', 'H', 'R', 'U'],
+            letters: ['f', 'j', 'g', 'h', 'r', 'u'],
             boss: false
         },
         {
             id: 'index-1-4',
             name: 'Add T & Y',
-            letters: ['F', 'J', 'G', 'H', 'R', 'U', 'T', 'Y'],
+            letters: ['f', 'j', 'g', 'h', 'r', 'u', 't', 'y'],
             boss: false
         },
         {
             id: 'index-1-5',
             name: 'Add V, B, N, M (Bottom Row)',
-            letters: ['F', 'J', 'G', 'H', 'R', 'U', 'T', 'Y', 'V', 'B', 'N', 'M'],
+            letters: ['f', 'j', 'g', 'h', 'r', 'u', 't', 'y', 'v', 'b', 'n', 'm'],
             boss: false
         },
         {
             id: 'index-1-boss',
             name: 'Boss: Index Finger Words',
-            letters: ['F', 'J', 'G', 'H', 'R', 'U', 'T', 'Y', 'V', 'B', 'N', 'M'],
+            letters: ['f', 'j', 'g', 'h', 'r', 'u', 't', 'y', 'v', 'b', 'n', 'm'],
             boss: true
         }
     ]
 };
+// Contains AI-generated edits.

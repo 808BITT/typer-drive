@@ -1,15 +1,21 @@
-// GameScene for dynamic typing gameplay
-// Implements Phaser.Scene and loads letters based on selected level and user statistics
+// GameScene for infinite survivor typing game
+// Implements Phaser.Scene and spawns mobs (letters) that move left
 // Auto-generated on 2025-05-19
 
-import { LevelConfig, getProgression, setProgression } from '@/types';
 import Phaser from 'phaser';
+import { LevelConfig, getProgression, setProgression } from '@/types';
 import { HUD } from './HUD';
+import { World1Index } from '../levels/World1Index';
+import { World2Middle } from '../levels/World2Middle';
+import { World3Ring } from '../levels/World3Ring';
+import { World4Pinky } from '../levels/World4Pinky';
 
 /**
- * GameScene - Main typing gameplay scene
+ * GameScene - Infinite Survivor Typing Game
  *
- * Letters and difficulty are determined by the selected level and user statistics.
+ * Letters (mobs) spawn on the right and move left on a conveyor belt.
+ * Typing the correct letter destroys the mob. If a mob reaches the left edge, player loses health.
+ * Score, combos, and difficulty ramp up over time.
  */
 export class GameScene extends Phaser.Scene {
     private levelConfig!: LevelConfig;
@@ -18,10 +24,6 @@ export class GameScene extends Phaser.Scene {
     private letterText?: Phaser.GameObjects.Text;
     private score: number = 0;
     private scoreText?: Phaser.GameObjects.Text;
-    private targetString: string = '';
-    private inputString: string = '';
-    private inputText?: Phaser.GameObjects.Text;
-    private letterColors: string[] = []; // Array to track colors for each letter
     private wpm: number = 0;
     private accuracy: number = 100;
     private wpmText?: Phaser.GameObjects.Text;
@@ -39,8 +41,25 @@ export class GameScene extends Phaser.Scene {
     private resultText?: Phaser.GameObjects.Text;
     private previousWordsY: number = 0;
     private hud!: HUD;
-    private nextTargetString: string = '';
     private ghostText?: Phaser.GameObjects.Text;
+
+    // New properties for infinite game mode
+    private mobs: Phaser.GameObjects.Group = null!;
+    private mobSpeed: number = 220; // Base speed, will scale with world progression
+    private spawnInterval: number = 1200; // ms, will scale with world progression
+    private mobsRemaining: number = 30; // Will scale with world progression
+    private totalMobs: number = 30;
+
+    private health: number = 100;
+    private combo: number = 0;
+    private maxCombo: number = 0;
+    private isGameOver: boolean = false;
+    private player!: Phaser.GameObjects.Rectangle;
+    private spawnTimer: number = 0;
+
+    // Utility to get all worlds and levels
+    private currentWorld: any;
+    private currentLevel: any;
 
     constructor() {
         super({ key: 'GameScene' });
@@ -68,18 +87,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     create() {
-        const { width, height } = this.scale;
-        const centerY = height / 2 - 60;
-        this.add.text(width / 2, 80, `Typing: ${this.levelConfig.name}`, {
-            fontFamily: 'Arial',
-            fontSize: '32px',
-            color: '#fff',
-            align: 'center',
-            fontStyle: 'bold',
-            stroke: '#222',
-            strokeThickness: 4
-        }).setOrigin(0.5);
-
         // Back to Level Select button
         const backButton = this.add.text(40, 30, '< Back', {
             fontFamily: 'Arial',
@@ -100,447 +107,268 @@ export class GameScene extends Phaser.Scene {
         // HUD
         this.hud = new HUD(this, { minWords: this.minWords, minWPM: this.minWPM, minAccuracy: this.minAccuracy });
 
-        // Target and input
-        this.generateTargetString();
-        this.inputString = '';
-        this.letterColors = [];
-        this.letterText = this.add.text(width / 2, centerY, this.targetString, {
-            fontFamily: 'Arial',
-            fontSize: '48px',
-            color: '#ff0',
-            align: 'center',
-            fontStyle: 'bold',
-            stroke: '#000',
-            strokeThickness: 6
-        }).setOrigin(0.5);
-        // Ghost preview (next word)
-        this.generateNextTargetString();
-        this.ghostText = this.add.text(width / 2 + (this.targetString.length * 26), centerY, this.nextTargetString, {
-            fontFamily: 'Arial',
-            fontSize: '40px',
-            color: '#888',
-            align: 'left',
-            fontStyle: 'italic',
-            stroke: '#000',
-            strokeThickness: 2
-        }).setOrigin(0, 0.5);
-        this.ghostText.setAlpha(0.5);
-        this.inputText = this.add.text(width / 2, centerY + 60, '', {
-            fontFamily: 'Arial',
-            fontSize: '40px',
-            color: '#fff',
-            align: 'center',
-            stroke: '#000',
-            strokeThickness: 4,
-            // Enable BBCode parsing for per-letter coloring
-            // @ts-ignore
-            parseBBCode: true
-        }).setOrigin(0.5);
+        // Player object (visual only, left side)
+        const { width, height } = this.scale;
+        this.player = this.add.rectangle(60, height / 2, 48, 48, 0x44aaff, 1).setOrigin(0.5);
+        this.player.setStrokeStyle(4, 0xffffff);
 
-        // Previous words
-        this.previousWords = [];
-        this.previousWordsY = centerY + 120;
-        this.startTime = this.time.now;
-        this.totalTyped = 0;
-        this.totalCorrect = 0;
-        this.completedWords = 0;
-        this.failed = false;
+        // Mobs group
+        this.mobs = this.add.group();
+        this.mobsRemaining = this.totalMobs;
+        // Input events
+        this.input.keyboard?.on('keydown', this.handleKey, this);
+        // Show mobs remaining in HUD
+        this.hud.goalText?.setText(`Mobs Left: ${this.mobsRemaining}`);
 
-        // Keyboard input
-        this.input.keyboard?.on('keydown', (event: KeyboardEvent) => {
-            if (!this.letters || !this.letterText || !this.inputText) return;
-            if (event.key.length !== 1) return;
-            if (this.inputString.length >= this.targetString.length) return;
-            const expectedChar = this.targetString[this.inputString.length];
-            const typedChar = event.key.toUpperCase();
-            this.totalTyped++;
-            let correct = false;
-            if (typedChar === expectedChar) {
-                this.inputString += typedChar;
-                this.totalCorrect++;
-                this.letterColors.push('#0f0');
-                correct = true;
-            } else {
-                this.inputString += typedChar;
-                this.letterColors.push('#f00');
-            }
-            this.updateInputText();
-            this.updateAccuracy();
-            if (this.inputString.length === this.targetString.length) {
-                this.completedWords++;
-                // Update goal text with new progress
-                this.hud.updateGoalText(this.completedWords, this.wpm, this.accuracy);
-                // Pass a copy of the letterColors for correct per-letter coloring
-                const wordColors = [...this.letterColors];
-                this.showPreviousWord(this.targetString, wordColors);
-                this.inputString = '';
-                this.letterColors = [];
-                // Move nextTargetString to targetString, and generate a new nextTargetString
-                this.targetString = this.nextTargetString;
-                this.letterText.setText(this.targetString);
-                this.generateNextTargetString();
-                if (this.ghostText) {
-                    this.ghostText.setText(this.nextTargetString);
-                    this.ghostText.setX(width / 2 + (this.targetString.length * 26));
-                }
-                // Immediately update input display to show underscores
-                this.updateInputText();
-                this.inputText.setText('');
-                this.inputText.setStyle({ color: '#fff' });
-                this.updateWPM();
-                this.checkGoal();
-            }
-        });
-    }
+        // Determine current world and level from levelConfig
+        const found = getCurrentWorldAndLevel(this.levelConfig.id) || {};
+        this.currentWorld = (found as any).world;
+        this.currentLevel = (found as any).level;
 
-    private generateTargetString() {
-        // Pick 5 random letters from this.letters
-        this.targetString = Array.from({ length: 5 }, () => {
-            const idx = Math.floor(Math.random() * this.letters.length);
-            return this.letters[idx];
-        }).join('');
-    }
-
-    private generateNextTargetString() {
-        this.nextTargetString = Array.from({ length: 5 }, () => {
-            const idx = Math.floor(Math.random() * this.letters.length);
-            return this.letters[idx];
-        }).join('');
-    }
-
-    private updateWPM() {
-        const elapsedMinutes = (this.time.now - this.startTime) / 60000;
-        // Standard WPM: (total characters typed / 5) / elapsed minutes
-        this.wpm = elapsedMinutes > 0 ? Math.round((this.totalTyped / 5) / elapsedMinutes) : 0;
-        this.hud.updateWPM(this.wpm);
-        // Reflect WPM change in goal text
-        this.hud.updateGoalText(this.completedWords, this.wpm, this.accuracy);
-    }
-
-    private updateAccuracy() {
-        this.accuracy = this.totalTyped > 0 ? Math.round((this.totalCorrect / this.totalTyped) * 100) : 100;
-        this.hud.updateAccuracy(this.accuracy);
-        // Reflect accuracy change in goal text
-        this.hud.updateGoalText(this.completedWords, this.wpm, this.accuracy);
-    }
-
-    private showPreviousWord(word: string, colors: string[]) {
-        const { width } = this.scale;
-        // Move existing previous words down and fade
-        this.previousWords.forEach((group, i) => {
-            this.tweens.add({
-                targets: group,
-                y: group.y + 40,
-                alpha: 0.5 - i * 0.2,
-                duration: 200,
-                onComplete: () => {
-                    if (i >= 1) group.destroy();
-                }
-            });
-        });
-        // Add new word below the current word
-        // Show per-letter coloring for the previous word using individual Text objects
-        const baseX = width / 2 - (word.length * 18) / 2;
-        let x = baseX;
-        const y = this.previousWordsY;
-        const prevLetters: Phaser.GameObjects.Text[] = [];
-        for (let i = 0; i < word.length; i++) {
-            const char = word[i];
-            const color = colors[i] || '#fff';
-            const letterObj = this.add.text(x, y, char, {
-                fontFamily: 'Arial',
-                fontSize: '32px',
-                color,
-                align: 'center',
-                stroke: '#000',
-                strokeThickness: 4
-            }).setOrigin(0, 0.5);
-            prevLetters.push(letterObj);
-            x += 18;
+        // Difficulty scaling based on world progression
+        const progression = getProgression();
+        let difficultyScale = 1;
+        if (this.currentWorld && progression) {
+            const completed = Object.keys(progression).filter(k => k.startsWith(this.currentWorld.id) && progression[k]).length;
+            difficultyScale = 1 + completed * 0.15;
         }
-        // Group the letters for tweening/fading
-        const group = this.add.container(0, 0, prevLetters);
-        group.setPosition(0, y);
-        group.setAlpha(1);
-        this.previousWords.unshift(group as any);
-        // Keep only 2 previous
-        if (this.previousWords.length > 2) {
-            const removed = this.previousWords.pop();
-            removed?.destroy();
-        }
-    } private checkGoal() {
-        if (this.completedWords >= this.minWords) {
-            if (this.wpm >= this.minWPM && this.accuracy >= this.minAccuracy) {
-                const { width, height } = this.scale;
-
-                // Create a celebration effect
-                const particles = this.add.particles(0, 0, 'white', {
-                    x: width / 2,
-                    y: height / 2,
-                    speed: { min: 200, max: 300 },
-                    angle: { min: 0, max: 360 },
-                    scale: { start: 0.6, end: 0 },
-                    blendMode: 'ADD',
-                    lifespan: 1000,
-                    gravityY: 300,
-                    quantity: 50
-                });
-
-                // Show achievement text
-                this.resultText = this.add.text(width / 2, height / 2, 'Level Complete!', {
-                    fontFamily: 'Arial',
-                    fontSize: '48px',
-                    color: '#ffff00',
-                    align: 'center',
-                    stroke: '#000',
-                    strokeThickness: 6
-                }).setOrigin(0.5);
-
-                // Add stats summary
-                const statsText = this.add.text(width / 2, height / 2 + 60,
-                    `Words: ${this.completedWords}   WPM: ${this.wpm}   Accuracy: ${this.accuracy}%`, {
-                    fontFamily: 'Arial',
-                    fontSize: '24px',
-                    color: '#ffffff',
-                    align: 'center',
-                    stroke: '#000',
-                    strokeThickness: 3
-                }).setOrigin(0.5);
-
-                // Show continue button
-                const continueButton = this.add.rectangle(width / 2, height / 2 + 120, 200, 50, 0x3355ff)
-                    .setInteractive({ useHandCursor: true })
-                    .setOrigin(0.5);
-
-                const continueText = this.add.text(width / 2, height / 2 + 120, 'Continue', {
-                    fontFamily: 'Arial',
-                    fontSize: '24px',
-                    color: '#fff',
-                    align: 'center'
-                }).setOrigin(0.5);
-
-                continueButton.on('pointerover', () => continueButton.setFillStyle(0x5577ff));
-                continueButton.on('pointerout', () => continueButton.setFillStyle(0x3355ff));
-                continueButton.on('pointerdown', () => {
-                    this.scene.start('LevelSelectScene');
-                });
-
-                // Auto-destroy particles after animation completes
-                this.time.delayedCall(2000, () => {
-                    particles.destroy();
-                });
-
-                // Unlock next level
-                const progression = getProgression();
-                const world = (window as any).currentWorldId || 'world-1-index';
-                const worldLevels = (window as any).currentWorldLevels || [];
-                const idx = worldLevels.findIndex((l: any) => l.id === this.levelConfig.id);
-                if (idx >= 0 && idx + 1 < worldLevels.length) {
-                    progression[worldLevels[idx + 1].id] = true;
-                    setProgression(progression);
-                }
-            } else if (!this.failed) {
-                this.failed = true;
-                const { width, height } = this.scale;
-                this.resultText = this.add.text(width / 2, height / 2, 'Level Failed', {
-                    fontFamily: 'Arial',
-                    fontSize: '48px',
-                    color: '#ff4444',
-                    align: 'center',
-                    stroke: '#000',
-                    strokeThickness: 6
-                }).setOrigin(0.5);
-                const statsText = this.add.text(width / 2, height / 2 + 60,
-                    `Words: ${this.completedWords}   WPM: ${this.wpm}   Accuracy: ${this.accuracy}%`, {
-                    fontFamily: 'Arial',
-                    fontSize: '24px',
-                    color: '#ffffff',
-                    align: 'center',
-                    stroke: '#000',
-                    strokeThickness: 3
-                }).setOrigin(0.5);
-                const retryButton = this.add.rectangle(width / 2, height / 2 + 120, 200, 50, 0xdd5555)
-                    .setInteractive({ useHandCursor: true })
-                    .setOrigin(0.5);
-                const retryText = this.add.text(width / 2, height / 2 + 120, 'Retry', {
-                    fontFamily: 'Arial',
-                    fontSize: '24px',
-                    color: '#fff',
-                    align: 'center'
-                }).setOrigin(0.5);
-                retryButton.on('pointerover', () => retryButton.setFillStyle(0xff7777));
-                retryButton.on('pointerout', () => retryButton.setFillStyle(0xdd5555));
-                retryButton.on('pointerdown', () => {
-                    this.scene.restart({ levelConfig: this.levelConfig });
-                });
-            }
-        }
-    }
-
-    /**
-     * Create a dedicated HUD method for better organization
-     * @param width The width of the game canvas
-     * @param height The height of the game canvas
-     * @returns An object containing references to dynamic UI elements
-     */
-    private createHUD(width: number, height: number) {
-        // Background for HUD
-        const hudBg = this.add.rectangle(width / 2, height - 50, width, 80, 0x000000, 0.7)
-            .setOrigin(0.5, 0.5)
-            .setStrokeStyle(1, 0x3333ff, 0.5);
-
-        // Score display (left)
-        this.scoreText = this.add.text(40, height - 60, `Score: 0`, {
-            fontFamily: 'Arial',
-            fontSize: '24px',
-            color: '#fff',
-            align: 'left',
-            stroke: '#222',
-            strokeThickness: 3
-        }).setOrigin(0, 0.5);
-
-        // WPM meter with gauge visualization (center)
-        this.wpmText = this.add.text(width / 2, height - 60, `WPM: 0`, {
-            fontFamily: 'Arial',
-            fontSize: '20px',
-            color: '#0f0',
-            align: 'center',
-            stroke: '#222',
-            strokeThickness: 2
-        }).setOrigin(0.5, 0.5);
-
-        // WPM visual meter
-        const wpmMeter = this.add.graphics();
-        wpmMeter.fillStyle(0x222222, 1);
-        wpmMeter.fillRect(width / 2 - 50, height - 45, 100, 10);
-        this.add.text(width / 2, height - 45, '|', {
-            fontSize: '12px',
-            color: '#fff'
-        }).setOrigin(0.5, 0);
-
-        // Accuracy display (right)
-        this.accuracyText = this.add.text(width - 40, height - 60, `Accuracy: 100%`, {
-            fontFamily: 'Arial',
-            fontSize: '20px',
-            color: '#0ff',
-            align: 'right',
-            stroke: '#222',
-            strokeThickness: 2
-        }).setOrigin(1, 0.5);
-
-        // Goal display (bottom)
-        this.goalText = this.add.text(width / 2, height - 30, `Goal: ${this.minWords} words, ${this.minWPM} WPM, ${this.minAccuracy}% accuracy`, {
-            fontFamily: 'Arial',
-            fontSize: '18px',
-            color: '#fff',
-            align: 'center',
-            stroke: '#222',
-            strokeThickness: 2
-        }).setOrigin(0.5);
-
-        // Progress visualization toward goals
-        const goalBarWidth = 300;
-        const goalBar = this.add.graphics();
-        goalBar.lineStyle(1, 0x444444, 1);
-        goalBar.strokeRect(width / 2 - goalBarWidth / 2, height - 15, goalBarWidth, 6);
-
-        // This container will hold dynamic UI updates in update()
-        return { wpmMeter, goalBar, goalBarWidth };
-    }
-
-    /**
-     * Updates the input text display with per-letter coloring.
-     * Each letter is colored green if correct, red if wrong, white if not yet typed.
-     */
-    private updateInputText() {
-        if (!this.inputText) return;
-        // Remove previous letter objects if any
-        if ((this as any)._inputLetterObjects) {
-            (this as any)._inputLetterObjects.forEach((obj: Phaser.GameObjects.Text) => obj.destroy());
-        }
-        (this as any)._inputLetterObjects = [];
-        const { width } = this.scale;
-        const baseX = width / 2 - (this.targetString.length * 24) / 2;
-        let x = baseX;
-        for (let i = 0; i < this.targetString.length; i++) {
-            let char = '_';
-            let color = '#888';
-            if (i < this.inputString.length) {
-                char = this.inputString[i];
-                color = this.letterColors[i] || '#fff';
-            }
-            const letterObj = this.add.text(x, this.inputText.y, char, {
-                fontFamily: 'Arial',
-                fontSize: '40px',
-                color,
-                align: 'center',
-                stroke: '#000',
-                strokeThickness: 4
-            }).setOrigin(0, 0.5);
-            (this as any)._inputLetterObjects.push(letterObj);
-            x += 24;
-        }
-        // Hide the old inputText object
-        this.inputText.setVisible(false);
-    }
-
-    /**
-     * Flash the target string with a color, then revert to yellow.
-     */
-    private flashTargetString(color: string) {
-        if (!this.letterText) return;
-        this.letterText.setColor(color);
-        this.time.delayedCall(200, () => {
-            this.letterText?.setColor('#ff0');
-        });
+        this.mobSpeed = 220 * difficultyScale;
+        this.spawnInterval = Math.max(600, 1200 - 80 * (difficultyScale - 1));
+        this.totalMobs = Math.round(30 * difficultyScale);
+        this.mobsRemaining = this.totalMobs;
+        this.hud.goalText?.setText(`Mobs Left: ${this.mobsRemaining}`);
     }
 
     update(time: number, delta: number) {
-        // Update progress bars based on current stats
-        if (this.wpm > 0 || this.completedWords > 0) {
-            const { width, height } = this.scale;
-
-            // Update WPM visual meter
-            const wpmMeter = this.add.graphics();
-            wpmMeter.clear();
-            wpmMeter.fillStyle(0x222222, 1);
-            wpmMeter.fillRect(width / 2 - 50, height - 45, 100, 10);
-
-            // Fill based on percentage of goal reached
-            const wpmPercent = Math.min(this.wpm / this.minWPM, 1);
-            wpmMeter.fillStyle(
-                wpmPercent < 0.5 ? 0xdd5555 :
-                    wpmPercent < 0.8 ? 0xdddd55 : 0x55dd55,
-                1
-            );
-            wpmMeter.fillRect(width / 2 - 50, height - 45, 100 * wpmPercent, 10);
-
-            // Progress toward goal
-            const goalBar = this.add.graphics();
-            goalBar.clear();
-            goalBar.lineStyle(1, 0x444444, 1);
-            goalBar.strokeRect(width / 2 - 150, height - 15, 300, 6);
-
-            // Fill based on words completed
-            const wordPercent = Math.min(this.completedWords / this.minWords, 1);
-            goalBar.fillStyle(0x3333ff, 0.8);
-            goalBar.fillRect(width / 2 - 150, height - 15, 300 * wordPercent, 6);
-
-            // Set WPM color based on performance
-            if (this.wpmText) {
-                this.wpmText.setColor(
-                    this.wpm < this.minWPM * 0.5 ? '#dd5555' :
-                        this.wpm < this.minWPM * 0.8 ? '#dddd55' : '#55dd55'
-                );
-            }
-
-            // Set accuracy color based on performance
-            if (this.accuracyText) {
-                this.accuracyText.setColor(
-                    this.accuracy < this.minAccuracy * 0.8 ? '#dd5555' :
-                        this.accuracy < this.minAccuracy ? '#dddd55' : '#55ddff'
-                );
+        if (this.isGameOver) return;
+        // Spawn mobs only if there are mobs left to spawn
+        if (this.mobsRemaining > 0) {
+            this.spawnTimer += delta;
+            if (this.spawnTimer >= this.spawnInterval) {
+                this.spawnMob();
+                this.spawnTimer = 0;
+                // Ramp up difficulty
+                if (this.spawnInterval > 300) this.spawnInterval -= 8;
+                this.mobSpeed += 1.2;
+                this.mobsRemaining--;
+                this.hud.goalText?.setText(`Mobs Left: ${this.mobsRemaining}`);
             }
         }
+        // Move mobs
+        const mobsArr = this.mobs.getChildren() as Phaser.GameObjects.Text[];
+        let nearestIdx = -1;
+        let minDist = Infinity;
+        mobsArr.forEach((mob, i) => {
+            mob.x += (mob.getData('vx') * delta) / 1000;
+            mob.y += (mob.getData('vy') * delta) / 1000;
+            // Find nearest mob to player
+            const dist = Phaser.Math.Distance.Between(mob.x, mob.y, this.player.x, this.player.y);
+            if (dist < minDist) {
+                minDist = dist;
+                nearestIdx = i;
+            }
+        });
+        mobsArr.forEach((mob, i) => {
+            // Highlight only the nearest mob
+            if (i === nearestIdx) {
+                mob.setStyle({ backgroundColor: '#ff0', color: '#000' });
+                mob.setDepth(2);
+            } else {
+                // Use a subtle highlight for others
+                mob.setStyle({ backgroundColor: 'rgba(34,34,34,0.7)', color: mob.getData('type') === 'hidden' ? '#ff44cc' : mob.getData('type') === 'strong' ? '#44eaff' : '#fff' });
+                mob.setDepth(1);
+            }
+            // Update display for strong/hidden mobs
+            const mobString = mob.getData('mobString');
+            const idx = mob.getData('currentIndex') || 0;
+            const type = mob.getData('type');
+            const visibleCount = mob.getData('visibleCount');
+            let display = '';
+            if (type === 'hidden') {
+                // Hidden mobs: show nothing for untyped, color for active, normal for completed
+                for (let j = 0; j < mobString.length; j++) {
+                    if (j < idx) display += mobString[j];
+                    else display += ' ';
+                }
+                mob.setStyle({ color: i === nearestIdx ? '#000' : '#ff44cc' });
+            } else if (type === 'strong') {
+                // Strong mobs: show visibleCount, fade out completed
+                for (let j = 0; j < mobString.length; j++) {
+                    if (j < idx) display += ' ';
+                    else if (j < visibleCount) display += mobString[j];
+                    else display += ' ';
+                }
+                // Set alpha for completed letters
+                mob.setAlpha(1);
+                if (idx > 0) {
+                    // Use a faded color for completed
+                    mob.setStyle({ color: '#bbb' });
+                } else {
+                    mob.setStyle({ color: i === nearestIdx ? '#000' : '#44eaff' });
+                }
+            } else {
+                // Normal mobs: show all, highlight current
+                for (let j = 0; j < mobString.length; j++) {
+                    if (j < idx) display += ' ';
+                    else display += mobString[j];
+                }
+                mob.setStyle({ color: i === nearestIdx ? '#000' : '#fff' });
+            }
+            mob.setText(display);
+            // If mob reaches player
+            if (Phaser.Math.Distance.Between(mob.x, mob.y, this.player.x, this.player.y) < 40 && !mob.getData('reached')) {
+                mob.setData('reached', true);
+                this.mobReachedPlayer(mob);
+            }
+        });
+        // Check for level completion
+        if (this.mobsRemaining === 0 && this.mobs.getLength() === 0 && !this.isGameOver) {
+            this.isGameOver = true;
+            this.showLevelComplete();
+        }
     }
+
+    private handleKey(event: KeyboardEvent) {
+        if (this.isGameOver) return;
+        const mobsArr = this.mobs.getChildren() as Phaser.GameObjects.Text[];
+        if (mobsArr.length === 0) return;
+        // Only allow typing on the nearest mob
+        let nearestIdx = -1;
+        let minDist = Infinity;
+        mobsArr.forEach((mob, i) => {
+            const dist = Phaser.Math.Distance.Between(mob.x, mob.y, this.player.x, this.player.y);
+            if (dist < minDist) {
+                minDist = dist;
+                nearestIdx = i;
+            }
+        });
+        const mob = mobsArr[nearestIdx];
+        if (!mob) return;
+        const mobString = mob.getData('mobString');
+        let idx = mob.getData('currentIndex') || 0;
+        const type = mob.getData('type');
+        // Case sensitive typing
+        if (event.key === mobString[idx]) {
+            idx++;
+            mob.setData('currentIndex', idx);
+            if (idx >= mobString.length) {
+                this.destroyMob(mob, true);
+            }
+        } else {
+            // Optionally: feedback for wrong key
+        }
+    }
+
+    private destroyMob(mob: Phaser.GameObjects.Text, correct: boolean) {
+        this.mobs.remove(mob, true, true);
+        mob.destroy();
+    }
+
+    private mobReachedPlayer(mob: Phaser.GameObjects.Text) {
+        this.health -= 10;
+        this.hud.updateHealth(this.health);
+        this.destroyMob(mob, false);
+        if (this.health <= 0) {
+            this.isGameOver = true;
+            this.hud.showGameOver(this.score, this.maxCombo);
+        }
+    }
+
+    private spawnMob() {
+        // define screen bounds and random spawn Y
+        const { width, height } = this.scale;
+        const y = Phaser.Math.Between(50, height - 50);
+
+        let mobType = 'normal';
+        let mobString = Phaser.Utils.Array.GetRandom(this.letters);
+        let visibleCount = 1;
+        if (Math.random() < 0.25) {
+            mobType = 'strong';
+            const len = Phaser.Math.Between(2, 4);
+            mobString = '';
+            for (let i = 0; i < len; i++) mobString += Phaser.Utils.Array.GetRandom(this.letters);
+            visibleCount = Phaser.Math.Between(1, len - 1);
+        } else if (Math.random() < 0.15) {
+            mobType = 'hidden';
+            const len = Phaser.Math.Between(2, 4);
+            mobString = '';
+            for (let i = 0; i < len; i++) mobString += Phaser.Utils.Array.GetRandom(this.letters);
+            visibleCount = 0;
+        }
+        // calculate velocity toward player
+        const dx = this.player.x - (width + 40);
+        const dy = this.player.y - y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const vx = (dx / dist) * this.mobSpeed;
+        const vy = (dy / dist) * this.mobSpeed;
+
+        // build display text
+        let display = '';
+        for (let i = 0; i < mobString.length; i++) {
+            display += i < visibleCount ? mobString[i] : ' ';
+        }
+
+        const mob = this.add.text(width + 40, y, display, {
+            fontFamily: 'Arial Black',
+            fontSize: '40px',
+            color: mobType === 'hidden' ? '#ff44cc' : mobType === 'strong' ? '#44eaff' : '#fff',
+            backgroundColor: '#222',
+            align: 'center',
+            stroke: '#000',
+            strokeThickness: 4
+        }).setOrigin(0.5);
+
+        mob.setData('mobString', mobString);
+        mob.setData('currentIndex', 0);
+        mob.setData('type', mobType);
+        mob.setData('visibleCount', visibleCount);
+        mob.setData('vx', vx);
+        mob.setData('vy', vy);
+        mob.setData('reached', false);
+        this.mobs.add(mob);
+    }
+
+    // Show level complete instead of game over
+    private showLevelComplete() {
+        // Unlock next level in progression
+        const progression = getProgression();
+        const world = (window as any).currentWorldId || 'world-1-index';
+        const worldLevels = (window as any).currentWorldLevels || [];
+        const idx = worldLevels.findIndex((l: any) => l.id === this.levelConfig.id);
+        if (idx >= 0 && idx + 1 < worldLevels.length) {
+            progression[worldLevels[idx + 1].id] = true;
+            setProgression(progression);
+        }
+        // Show level complete UI
+        const { width, height } = this.scale;
+        this.add.rectangle(width / 2, height / 2, 400, 200, 0x222244, 0.95).setOrigin(0.5);
+        this.add.text(width / 2, height / 2 - 40, 'Level Complete!', {
+            fontFamily: 'Arial', fontSize: '40px', color: '#fff', align: 'center', stroke: '#222', strokeThickness: 4
+        }).setOrigin(0.5);
+        this.add.text(width / 2, height / 2 + 10, `Score: ${this.score}`, {
+            fontFamily: 'Arial', fontSize: '28px', color: '#ffff00', align: 'center', stroke: '#000', strokeThickness: 3
+        }).setOrigin(0.5);
+        // Continue button
+        const continueButton = this.add.rectangle(width / 2, height / 2 + 70, 180, 48, 0x44aaff, 1).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        this.add.text(width / 2, height / 2 + 70, 'Next Level', {
+            fontFamily: 'Arial', fontSize: '24px', color: '#fff', align: 'center'
+        }).setOrigin(0.5);
+        continueButton.on('pointerdown', () => {
+            if (idx >= 0 && idx + 1 < worldLevels.length) {
+                this.scene.start('GameScene', { levelConfig: worldLevels[idx + 1] });
+            } else {
+                this.scene.start('LevelSelectScene');
+            }
+        });
+    }
+}
+
+// Utility to get all worlds and levels
+const worlds = [World1Index, World2Middle, World3Ring, World4Pinky];
+function getCurrentWorldAndLevel(levelId: string) {
+  for (const world of worlds) {
+    const level = world.levels.find(l => l.id === levelId);
+    if (level) return { world, level };
+  }
+  return null;
 }
