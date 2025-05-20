@@ -1,0 +1,12 @@
+# Node
+client/node_modules/
+client/dist/
+
+# Go
+server/bin/
+
+# Build
+dist/
+
+# Logs
+*.log
