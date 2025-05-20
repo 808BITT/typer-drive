@@ -29,7 +29,7 @@ export class HUD {
     goalBar?: Phaser.GameObjects.Graphics;
     goalFill?: Phaser.GameObjects.Graphics;
     goalBarWidth: number = 300;
-    
+
     // Animation properties
     private progressTween?: Phaser.Tweens.Tween;
     private particleEmitter?: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -43,127 +43,109 @@ export class HUD {
         this.minAccuracy = options.minAccuracy;
         this.createHUD();
         this.setupParticles();
+        // Listen for resize events to reposition HUD elements
+        this.scene.scale.on('resize', this.onResize, this);
     }
 
     private createHUD() {
-        // Animated starfield background for HUD
-        const starParticles = this.scene.add.particles(0, 0, 'white', {
-            x: { min: 0, max: this.width },
-            y: { min: this.height - 90, max: this.height },
-            speedY: { min: 10, max: 30 },
-            scale: { start: 0.1, end: 0 },
-            alpha: { start: 0.5, end: 0 },
-            lifespan: 2000,
-            quantity: 1,
-            frequency: 100,
-            blendMode: 'ADD',
-        });
-        starParticles.setDepth(-1);
+        // Remove any existing HUD elements before creating new ones
+        this.destroyHUD();
 
-        // Create glass-like background with gradient
-        this.hudBg = this.scene.add.rectangle(this.width / 2, this.height - 50, this.width, 90, 0x000033, 0.8)
+        // Glassmorphism background with blur and rounded corners
+        this.hudBg = this.scene.add.rectangle(this.width / 2, this.height - 60, this.width - 60, 110, 0x111133, 0.7)
             .setOrigin(0.5, 0.5)
-            .setStrokeStyle(2, 0x4466ff, 0.7);
+            .setStrokeStyle(3, 0x44aaff, 0.8)
+            .setAlpha(0.92)
+            .setDepth(-1);
+        this.hudBg.setPipeline && this.hudBg.setPipeline('Light2D');
 
-        // Goal display moved to top of the screen for better visibility
-        const goalBg = this.scene.add.rectangle(this.width / 2, 20, 600, 40, 0x000033, 0.8)
+        // Goal display at the top, more prominent and spaced
+        const goalBg = this.scene.add.rectangle(this.width / 2, 28, 520, 54, 0x222244, 0.85)
             .setOrigin(0.5, 0)
-            .setStrokeStyle(2, 0x22aaff, 0.7);
+            .setStrokeStyle(3, 0x22aaff, 0.8)
+            .setAlpha(0.96)
+            .setDepth(1);
+        goalBg.setPipeline && goalBg.setPipeline('Light2D');
 
-        this.goalText = this.scene.add.text(this.width / 2, 40,
+        this.goalText = this.scene.add.text(this.width / 2, 54,
             `Goal: ${this.minWords} words, ${this.minWPM} WPM, ${this.minAccuracy}% accuracy`, {
-            fontFamily: 'Arial',
-            fontSize: '20px',
-            color: '#ffea00',
+                fontFamily: 'Arial Black',
+                fontSize: '22px',
+                color: '#fff',
             align: 'center',
+            stroke: '#00eaff',
+            strokeThickness: 4,
+            shadow: { offsetX: 0, offsetY: 2, color: '#000', blur: 8, stroke: true, fill: true }
+        }).setOrigin(0.5, 0.5).setDepth(2);
+
+        // Dynamic layout calculations
+        const padding = 32;
+        const barWidth = this.width * 0.22;
+        const barHeight = 18;
+        const bottomY = this.height - padding;
+
+        // WPM section (left)
+        this.scene.add.text(padding, bottomY - 40, 'WPM', {
+            fontFamily: 'Arial Black',
+            fontSize: '22px',
+            color: '#1fffc3',
             stroke: '#000',
             strokeThickness: 3,
-            shadow: { offsetX: 1, offsetY: 1, color: '#000', blur: 5, stroke: true, fill: true }
-        }).setOrigin(0.5, 0.5);
-
-        // WPM meter with animated fill
-        const wpmLabel = this.scene.add.text(40, this.height - 70, "WPM:", {
-            fontFamily: 'Arial',
-            fontSize: '18px',
-            color: '#88ff88',
-            align: 'left',
-            stroke: '#000',
-            strokeThickness: 2
+            shadow: { offsetX: 0, offsetY: 2, color: '#000', blur: 6, stroke: true, fill: true }
         }).setOrigin(0, 0.5);
-
-        this.wpmText = this.scene.add.text(110, this.height - 70, `0`, {
-            fontFamily: 'Arial',
-            fontSize: '28px',
-            color: '#00ff00',
-            align: 'left',
+        this.wpmText = this.scene.add.text(padding, bottomY - 10, '0', {
+            fontFamily: 'Arial Black',
+            fontSize: '22px',
+            color: '#1fffc3',
             stroke: '#000',
-            strokeThickness: 3,
-            shadow: { offsetX: 1, offsetY: 1, color: '#000', blur: 3, stroke: true, fill: true }
+            strokeThickness: 4,
+            shadow: { offsetX: 0, offsetY: 2, color: '#000', blur: 8, stroke: true, fill: true }
         }).setOrigin(0, 0.5);
-
-        // WPM meter background and fill
         this.wpmMeter = this.scene.add.graphics();
-        this.wpmMeter.fillStyle(0x111111, 1);
-        this.wpmMeter.fillRect(40, this.height - 45, 200, 16);
-        this.wpmMeter.lineStyle(2, 0x00aa00, 1);
-        this.wpmMeter.strokeRect(40, this.height - 45, 200, 16);
-
+        this.wpmMeter.lineStyle(3, 0x1fffc3, 1);
+        this.wpmMeter.strokeRoundedRect(padding, bottomY, barWidth, barHeight, 10);
         this.wpmFill = this.scene.add.graphics();
-        this.wpmFill.fillStyle(0x00ff00, 1);
-        // Will be updated dynamically
 
-        // Accuracy meter
-        const accuracyLabel = this.scene.add.text(this.width / 2 - 100, this.height - 70, "Accuracy:", {
-            fontFamily: 'Arial',
-            fontSize: '18px',
-            color: '#88ffff',
-            align: 'center',
-            stroke: '#000',
-            strokeThickness: 2
-        }).setOrigin(0, 0.5);
-
-        this.accuracyText = this.scene.add.text(this.width / 2 + 20, this.height - 70, `100%`, {
-            fontFamily: 'Arial',
-            fontSize: '28px',
-            color: '#00ffff',
-            align: 'left',
+        // Accuracy section (center)
+        const centerX = this.width / 2;
+        this.scene.add.text(centerX - barWidth / 2, bottomY - 40, 'Accuracy', {
+            fontFamily: 'Arial Black',
+            fontSize: '22px',
+            color: '#1fdfff',
             stroke: '#000',
             strokeThickness: 3,
-            shadow: { offsetX: 1, offsetY: 1, color: '#000', blur: 3, stroke: true, fill: true }
+            shadow: { offsetX: 0, offsetY: 2, color: '#000', blur: 6, stroke: true, fill: true }
         }).setOrigin(0, 0.5);
-
-        // Accuracy meter background and fill
-        this.accuracyMeter = this.scene.add.graphics();
-        this.accuracyMeter.fillStyle(0x111111, 1);
-        this.accuracyMeter.fillRect(this.width / 2 - 100, this.height - 45, 200, 16);
-        this.accuracyMeter.lineStyle(2, 0x00aaaa, 1);
-        this.accuracyMeter.strokeRect(this.width / 2 - 100, this.height - 45, 200, 16);
-
-        this.accuracyFill = this.scene.add.graphics();
-        this.accuracyFill.fillStyle(0x00ffff, 1);
-        this.accuracyFill.fillRect(this.width / 2 - 100, this.height - 45, 200, 16);
-
-        // Progress bar that shows completed words / goal words
-        const progressLabel = this.scene.add.text(this.width - 260, this.height - 70, "Progress:", {
-            fontFamily: 'Arial',
-            fontSize: '18px',
-            color: '#ff88ff',
-            align: 'right',
+        this.accuracyText = this.scene.add.text(centerX - barWidth / 2, bottomY - 10, '100%', {
+            fontFamily: 'Arial Black',
+            fontSize: '22px',
+            color: '#1fdfff',
             stroke: '#000',
-            strokeThickness: 2
+            strokeThickness: 4,
+            shadow: { offsetX: 0, offsetY: 2, color: '#000', blur: 8, stroke: true, fill: true }
         }).setOrigin(0, 0.5);
+        this.accuracyMeter = this.scene.add.graphics();
+        this.accuracyMeter.lineStyle(3, 0x1fdfff, 1);
+        this.accuracyMeter.strokeRoundedRect(centerX - barWidth / 2, bottomY, barWidth, barHeight, 10);
+        this.accuracyFill = this.scene.add.graphics();
 
+        // Progress section (right)
+        const rightX = this.width - barWidth - padding;
+        this.scene.add.text(rightX, bottomY - 40, 'Progress', {
+            fontFamily: 'Arial Black',
+            fontSize: '22px',
+            color: '#e97fff',
+            stroke: '#000',
+            strokeThickness: 3,
+            shadow: { offsetX: 0, offsetY: 2, color: '#000', blur: 6, stroke: true, fill: true }
+        }).setOrigin(0, 0.5);
         this.goalBar = this.scene.add.graphics();
-        this.goalBar.fillStyle(0x111111, 1);
-        this.goalBar.fillRect(this.width - 180, this.height - 45, this.goalBarWidth / 2, 16);
-        this.goalBar.lineStyle(2, 0xaa00aa, 1);
-        this.goalBar.strokeRect(this.width - 180, this.height - 45, this.goalBarWidth / 2, 16);
-
+        this.goalBar.lineStyle(3, 0xe97fff, 1);
+        this.goalBar.strokeRoundedRect(rightX, bottomY, barWidth, barHeight, 10);
         this.goalFill = this.scene.add.graphics();
-        this.goalFill.fillStyle(0xff00ff, 1);
-        // Will be updated dynamically
+        this.goalBarWidth = barWidth;
 
-        // Add animated glow to goal text
+        // Animated glow for goal text
         if (this.goalText) {
             this.scene.tweens.add({
                 targets: this.goalText,
@@ -175,12 +157,12 @@ export class HUD {
             });
         }
 
-        // Add floating animation to meters
+        // Floating animation for meters
         [this.wpmText, this.accuracyText].forEach(txt => {
             if (txt) {
                 this.scene.tweens.add({
                     targets: txt,
-                    y: '+=4',
+                    y: '+=6',
                     duration: 1800,
                     yoyo: true,
                     repeat: -1,
@@ -188,6 +170,28 @@ export class HUD {
                 });
             }
         });
+    }
+
+    private onResize(gameSize: Phaser.Structs.Size) {
+        this.width = gameSize.width;
+        this.height = gameSize.height;
+        // Remove and recreate HUD for new size
+        this.destroyHUD();
+        this.createHUD();
+    }
+
+    private destroyHUD() {
+        // Destroy all HUD elements if they exist
+        this.hudBg?.destroy();
+        this.goalText?.destroy();
+        this.wpmText?.destroy();
+        this.accuracyText?.destroy();
+        this.wpmMeter?.destroy();
+        this.wpmFill?.destroy();
+        this.accuracyMeter?.destroy();
+        this.accuracyFill?.destroy();
+        this.goalBar?.destroy();
+        this.goalFill?.destroy();
     }
 
     private setupParticles() {
@@ -267,31 +271,31 @@ export class HUD {
     }
 
     updateAccuracy(accuracy: number) {
-            // Update text
-            this.accuracyText?.setText(`${accuracy}%`);
+        // Update text
+        this.accuracyText?.setText(`${accuracy}%`);
 
-            // Animate accuracy meter
-            if (this.accuracyFill) {
-                this.accuracyFill.clear();
-                this.accuracyFill.fillStyle(this.getAccuracyColor(accuracy), 1);
+        // Animate accuracy meter
+        if (this.accuracyFill) {
+            this.accuracyFill.clear();
+            this.accuracyFill.fillStyle(this.getAccuracyColor(accuracy), 1);
 
-                // Calculate width based on accuracy
-                const fillWidth = (accuracy / 100) * 200;
+            // Calculate width based on accuracy
+            const fillWidth = (accuracy / 100) * 200;
 
-                // Animate the fill
-                this.scene.tweens.add({
-                    targets: { width: 0 },
-                    width: fillWidth,
-                    duration: 400,
-                    ease: 'Power2',
-                    onUpdate: (tween, target) => {
-                        this.accuracyFill?.clear();
-                        this.accuracyFill?.fillStyle(this.getAccuracyColor(accuracy), 1);
-                        this.accuracyFill?.fillRect(this.width / 2 - 100, this.height - 45, target.width, 16);
-                    }
-                });
-            }
+            // Animate the fill
+            this.scene.tweens.add({
+                targets: { width: 0 },
+                width: fillWidth,
+                duration: 400,
+                ease: 'Power2',
+                onUpdate: (tween, target) => {
+                    this.accuracyFill?.clear();
+                    this.accuracyFill?.fillStyle(this.getAccuracyColor(accuracy), 1);
+                    this.accuracyFill?.fillRect(this.width / 2 - 100, this.height - 45, target.width, 16);
+                }
+            });
         }
+    }
 
     updateGoalText(words: number, wpm: number, accuracy: number) {
         // Update text with more visual appeal

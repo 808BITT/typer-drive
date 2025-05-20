@@ -8,10 +8,16 @@ import { WorldSelectScene } from './scenes/WorldSelectScene';
 
 const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
+    width: '100%',
+    height: '100%',
     parent: 'game-container',
-    scene: [BootScene, MainMenuScene, WorldSelectScene, LevelSelectScene, GameScene, LevelSceneIndex1]
+    scene: [BootScene, MainMenuScene, WorldSelectScene, LevelSelectScene, GameScene, LevelSceneIndex1],
+    scale: {
+        mode: Phaser.Scale.RESIZE,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: '100%',
+        height: '100%'
+    }
 };
 
 window.addEventListener('load', () => {
