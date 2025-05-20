@@ -20,6 +20,7 @@ export class GameScene extends Phaser.Scene {
     private targetString: string = '';
     private inputString: string = '';
     private inputText?: Phaser.GameObjects.Text;
+    private letterColors: string[] = []; // Array to track colors for each letter
     private wpm: number = 0;
     private accuracy: number = 100;
     private wpmText?: Phaser.GameObjects.Text;
@@ -27,7 +28,7 @@ export class GameScene extends Phaser.Scene {
     private startTime: number = 0;
     private totalTyped: number = 0;
     private totalCorrect: number = 0;
-    private previousWords: Phaser.GameObjects.Text[] = [];
+    private previousWords: Phaser.GameObjects.Container[] = [];
     private minWords: number = 10; // Example goal
     private minWPM: number = 20;
     private minAccuracy: number = 90;
@@ -52,12 +53,17 @@ export class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        // TODO: Load assets for gameplay (sprites, backgrounds, audio)
+        // Create a simple white particle for celebrations
+        this.textures.generate('white', {
+            data: ['1'],
+            pixelWidth: 2,
+            pixelHeight: 2
+        });
+        // TODO: Load actual game assets
     }
 
     create() {
         const { width, height } = this.scale;
-        // Move the target and input higher up
         const centerY = height / 2 - 60;
         this.add.text(width / 2, 80, `Typing: ${this.levelConfig.name}`, {
             fontFamily: 'Arial',
@@ -86,57 +92,13 @@ export class GameScene extends Phaser.Scene {
             this.scene.start('LevelSelectScene');
         });
 
-        // Score display
-        this.scoreText = this.add.text(40, height - 60, `Score: 0`, {
-            fontFamily: 'Arial',
-            fontSize: '24px',
-            color: '#fff',
-            align: 'left',
-            stroke: '#222',
-            strokeThickness: 3
-        }).setOrigin(0, 0.5);
+        // HUD
+        this.createHUD(width, height);
 
-        // WPM and Accuracy meters
-        this.wpmText = this.add.text(width / 2, height - 60, `WPM: 0`, {
-            fontFamily: 'Arial',
-            fontSize: '20px',
-            color: '#0f0',
-            align: 'center',
-            stroke: '#222',
-            strokeThickness: 2
-        }).setOrigin(0.5, 0.5);
-        this.accuracyText = this.add.text(width - 40, height - 60, `Accuracy: 100%`, {
-            fontFamily: 'Arial',
-            fontSize: '20px',
-            color: '#0ff',
-            align: 'right',
-            stroke: '#222',
-            strokeThickness: 2
-        }).setOrigin(1, 0.5);
-
-        // Goal display
-        this.goalText = this.add.text(width / 2, height - 30, `Goal: ${this.minWords} words, ${this.minWPM} WPM, ${this.minAccuracy}% accuracy`, {
-            fontFamily: 'Arial',
-            fontSize: '18px',
-            color: '#fff',
-            align: 'center',
-            stroke: '#222',
-            strokeThickness: 2
-        }).setOrigin(0.5);
-
-        // Generate first target string
+        // Target and input
         this.generateTargetString();
         this.inputString = '';
-        this.inputText = this.add.text(width / 2, centerY + 60, '', {
-            fontFamily: 'Arial',
-            fontSize: '40px',
-            color: '#fff',
-            align: 'center',
-            stroke: '#000',
-            strokeThickness: 4
-        }).setOrigin(0.5);
-
-        // Show target string (move up)
+        this.letterColors = [];
         this.letterText = this.add.text(width / 2, centerY, this.targetString, {
             fontFamily: 'Arial',
             fontSize: '48px',
@@ -146,48 +108,25 @@ export class GameScene extends Phaser.Scene {
             stroke: '#000',
             strokeThickness: 6
         }).setOrigin(0.5);
-
-        // Previous words list (now below input/current)
-        this.previousWords = [];
-        this.previousWordsY = centerY + 120;
-
-        // Move stats to the bottom (HUD style)
-        this.scoreText = this.add.text(40, height - 60, `Score: 0`, {
+        this.inputText = this.add.text(width / 2, centerY + 60, '', {
             fontFamily: 'Arial',
-            fontSize: '24px',
-            color: '#fff',
-            align: 'left',
-            stroke: '#222',
-            strokeThickness: 3
-        }).setOrigin(0, 0.5);
-        this.wpmText = this.add.text(width / 2, height - 60, `WPM: 0`, {
-            fontFamily: 'Arial',
-            fontSize: '20px',
-            color: '#0f0',
-            align: 'center',
-            stroke: '#222',
-            strokeThickness: 2
-        }).setOrigin(0.5, 0.5);
-        this.accuracyText = this.add.text(width - 40, height - 60, `Accuracy: 100%`, {
-            fontFamily: 'Arial',
-            fontSize: '20px',
-            color: '#0ff',
-            align: 'right',
-            stroke: '#222',
-            strokeThickness: 2
-        }).setOrigin(1, 0.5);
-        this.goalText = this.add.text(width / 2, height - 30, `Goal: ${this.minWords} words, ${this.minWPM} WPM, ${this.minAccuracy}% accuracy`, {
-            fontFamily: 'Arial',
-            fontSize: '18px',
+            fontSize: '40px',
             color: '#fff',
             align: 'center',
-            stroke: '#222',
-            strokeThickness: 2
+            stroke: '#000',
+            strokeThickness: 4,
+            // Enable BBCode parsing for per-letter coloring
+            // @ts-ignore
+            parseBBCode: true
         }).setOrigin(0.5);
 
+        // Previous words
+        this.previousWords = [];
+        this.previousWordsY = centerY + 120;
         this.startTime = this.time.now;
         this.totalTyped = 0;
         this.totalCorrect = 0;
+        this.completedWords = 0;
 
         // Keyboard input
         this.input.keyboard?.on('keydown', (event: KeyboardEvent) => {
@@ -201,27 +140,29 @@ export class GameScene extends Phaser.Scene {
             if (typedChar === expectedChar) {
                 this.inputString += typedChar;
                 this.totalCorrect++;
-                this.inputText.setText(this.inputString);
-                this.inputText.setColor('#0f0');
+                this.letterColors.push('#0f0');
                 correct = true;
             } else {
                 this.inputString += typedChar;
-                this.inputText.setText(this.inputString);
-                this.inputText.setColor('#f00');
+                this.letterColors.push('#f00');
             }
+            this.updateInputText();
             this.updateAccuracy();
             if (this.inputString.length === this.targetString.length) {
-                // Completed string
                 this.score += correct ? 1 : 0;
                 this.completedWords++;
                 this.scoreText?.setText(`Score: ${this.score}`);
-                // Slide previous words down and fade
-                this.showPreviousWord(this.targetString, correct);
+                // Pass a copy of the letterColors for correct per-letter coloring
+                const wordColors = [...this.letterColors];
+                this.showPreviousWord(this.targetString, wordColors);
                 this.inputString = '';
+                this.letterColors = [];
                 this.generateTargetString();
                 this.letterText.setText(this.targetString);
+                // Immediately update input display to show underscores
+                this.updateInputText();
                 this.inputText.setText('');
-                this.inputText.setColor('#fff');
+                this.inputText.setStyle({ color: '#fff' });
                 this.updateWPM();
                 this.checkGoal();
             }
@@ -247,56 +188,279 @@ export class GameScene extends Phaser.Scene {
         this.accuracyText?.setText(`Accuracy: ${this.accuracy}%`);
     }
 
-    private showPreviousWord(word: string, correct: boolean) {
+    private showPreviousWord(word: string, colors: string[]) {
         const { width } = this.scale;
         // Move existing previous words down and fade
-        this.previousWords.forEach((txt, i) => {
+        this.previousWords.forEach((group, i) => {
             this.tweens.add({
-                targets: txt,
-                y: txt.y + 40,
+                targets: group,
+                y: group.y + 40,
                 alpha: 0.5 - i * 0.2,
                 duration: 200,
                 onComplete: () => {
-                    if (i >= 1) txt.destroy();
+                    if (i >= 1) group.destroy();
                 }
             });
         });
         // Add new word below the current word
-        const color = correct ? '#0f0' : '#f00';
-        const prev = this.add.text(width / 2, this.previousWordsY, word, {
-            fontFamily: 'Arial',
-            fontSize: '32px',
-            color,
-            align: 'center',
-            stroke: '#000',
-            strokeThickness: 4
-        }).setOrigin(0.5);
-        prev.setAlpha(1);
-        this.previousWords.unshift(prev);
+        // Show per-letter coloring for the previous word using individual Text objects
+        const baseX = width / 2 - (word.length * 18) / 2;
+        let x = baseX;
+        const y = this.previousWordsY;
+        const prevLetters: Phaser.GameObjects.Text[] = [];
+        for (let i = 0; i < word.length; i++) {
+            const char = word[i];
+            const color = colors[i] || '#fff';
+            const letterObj = this.add.text(x, y, char, {
+                fontFamily: 'Arial',
+                fontSize: '32px',
+                color,
+                align: 'center',
+                stroke: '#000',
+                strokeThickness: 4
+            }).setOrigin(0, 0.5);
+            prevLetters.push(letterObj);
+            x += 18;
+        }
+        // Group the letters for tweening/fading
+        const group = this.add.container(0, 0, prevLetters);
+        group.setPosition(0, y);
+        group.setAlpha(1);
+        this.previousWords.unshift(group as any);
         // Keep only 2 previous
         if (this.previousWords.length > 2) {
             const removed = this.previousWords.pop();
             removed?.destroy();
         }
-    }
-
-    private checkGoal() {
+    } private checkGoal() {
         if (this.completedWords >= this.minWords && this.wpm >= this.minWPM && this.accuracy >= this.minAccuracy) {
             if (!this.resultText) {
                 const { width, height } = this.scale;
-                this.resultText = this.add.text(width / 2, height / 2 + 120, 'Goal Achieved!', {
+
+                // Create a celebration effect
+                const particles = this.add.particles(0, 0, 'white', {
+                    x: width / 2,
+                    y: height / 2,
+                    speed: { min: 200, max: 300 },
+                    angle: { min: 0, max: 360 },
+                    scale: { start: 0.6, end: 0 },
+                    blendMode: 'ADD',
+                    lifespan: 1000,
+                    gravityY: 300,
+                    quantity: 50
+                });
+
+                // Show achievement text
+                this.resultText = this.add.text(width / 2, height / 2, 'Level Complete!', {
                     fontFamily: 'Arial',
-                    fontSize: '36px',
-                    color: '#0f0',
+                    fontSize: '48px',
+                    color: '#ffff00',
                     align: 'center',
                     stroke: '#000',
-                    strokeThickness: 4
+                    strokeThickness: 6
                 }).setOrigin(0.5);
+
+                // Add stats summary
+                const statsText = this.add.text(width / 2, height / 2 + 60,
+                    `Words: ${this.completedWords}   WPM: ${this.wpm}   Accuracy: ${this.accuracy}%`, {
+                    fontFamily: 'Arial',
+                    fontSize: '24px',
+                    color: '#ffffff',
+                    align: 'center',
+                    stroke: '#000',
+                    strokeThickness: 3
+                }).setOrigin(0.5);
+
+                // Show continue button
+                const continueButton = this.add.rectangle(width / 2, height / 2 + 120, 200, 50, 0x3355ff)
+                    .setInteractive({ useHandCursor: true })
+                    .setOrigin(0.5);
+
+                const continueText = this.add.text(width / 2, height / 2 + 120, 'Continue', {
+                    fontFamily: 'Arial',
+                    fontSize: '24px',
+                    color: '#fff',
+                    align: 'center'
+                }).setOrigin(0.5);
+
+                continueButton.on('pointerover', () => continueButton.setFillStyle(0x5577ff));
+                continueButton.on('pointerout', () => continueButton.setFillStyle(0x3355ff));
+                continueButton.on('pointerdown', () => {
+                    this.scene.start('LevelSelectScene');
+                });
+
+                // Auto-destroy particles after animation completes
+                this.time.delayedCall(2000, () => {
+                    particles.destroy();
+                });
             }
         }
     }
 
+    /**
+     * Create a dedicated HUD method for better organization
+     * @param width The width of the game canvas
+     * @param height The height of the game canvas
+     * @returns An object containing references to dynamic UI elements
+     */
+    private createHUD(width: number, height: number) {
+        // Background for HUD
+        const hudBg = this.add.rectangle(width / 2, height - 50, width, 80, 0x000000, 0.7)
+            .setOrigin(0.5, 0.5)
+            .setStrokeStyle(1, 0x3333ff, 0.5);
+
+        // Score display (left)
+        this.scoreText = this.add.text(40, height - 60, `Score: 0`, {
+            fontFamily: 'Arial',
+            fontSize: '24px',
+            color: '#fff',
+            align: 'left',
+            stroke: '#222',
+            strokeThickness: 3
+        }).setOrigin(0, 0.5);
+
+        // WPM meter with gauge visualization (center)
+        this.wpmText = this.add.text(width / 2, height - 60, `WPM: 0`, {
+            fontFamily: 'Arial',
+            fontSize: '20px',
+            color: '#0f0',
+            align: 'center',
+            stroke: '#222',
+            strokeThickness: 2
+        }).setOrigin(0.5, 0.5);
+
+        // WPM visual meter
+        const wpmMeter = this.add.graphics();
+        wpmMeter.fillStyle(0x222222, 1);
+        wpmMeter.fillRect(width / 2 - 50, height - 45, 100, 10);
+        this.add.text(width / 2, height - 45, '|', {
+            fontSize: '12px',
+            color: '#fff'
+        }).setOrigin(0.5, 0);
+
+        // Accuracy display (right)
+        this.accuracyText = this.add.text(width - 40, height - 60, `Accuracy: 100%`, {
+            fontFamily: 'Arial',
+            fontSize: '20px',
+            color: '#0ff',
+            align: 'right',
+            stroke: '#222',
+            strokeThickness: 2
+        }).setOrigin(1, 0.5);
+
+        // Goal display (bottom)
+        this.goalText = this.add.text(width / 2, height - 30, `Goal: ${this.minWords} words, ${this.minWPM} WPM, ${this.minAccuracy}% accuracy`, {
+            fontFamily: 'Arial',
+            fontSize: '18px',
+            color: '#fff',
+            align: 'center',
+            stroke: '#222',
+            strokeThickness: 2
+        }).setOrigin(0.5);
+
+        // Progress visualization toward goals
+        const goalBarWidth = 300;
+        const goalBar = this.add.graphics();
+        goalBar.lineStyle(1, 0x444444, 1);
+        goalBar.strokeRect(width / 2 - goalBarWidth / 2, height - 15, goalBarWidth, 6);
+
+        // This container will hold dynamic UI updates in update()
+        return { wpmMeter, goalBar, goalBarWidth };
+    }
+
+    /**
+     * Updates the input text display with per-letter coloring.
+     * Each letter is colored green if correct, red if wrong, white if not yet typed.
+     */
+    private updateInputText() {
+        if (!this.inputText) return;
+        // Remove previous letter objects if any
+        if ((this as any)._inputLetterObjects) {
+            (this as any)._inputLetterObjects.forEach((obj: Phaser.GameObjects.Text) => obj.destroy());
+        }
+        (this as any)._inputLetterObjects = [];
+        const { width } = this.scale;
+        const baseX = width / 2 - (this.targetString.length * 24) / 2;
+        let x = baseX;
+        for (let i = 0; i < this.targetString.length; i++) {
+            let char = '_';
+            let color = '#888';
+            if (i < this.inputString.length) {
+                char = this.inputString[i];
+                color = this.letterColors[i] || '#fff';
+            }
+            const letterObj = this.add.text(x, this.inputText.y, char, {
+                fontFamily: 'Arial',
+                fontSize: '40px',
+                color,
+                align: 'center',
+                stroke: '#000',
+                strokeThickness: 4
+            }).setOrigin(0, 0.5);
+            (this as any)._inputLetterObjects.push(letterObj);
+            x += 24;
+        }
+        // Hide the old inputText object
+        this.inputText.setVisible(false);
+    }
+
+    /**
+     * Flash the target string with a color, then revert to yellow.
+     */
+    private flashTargetString(color: string) {
+        if (!this.letterText) return;
+        this.letterText.setColor(color);
+        this.time.delayedCall(200, () => {
+            this.letterText?.setColor('#ff0');
+        });
+    }
+
     update(time: number, delta: number) {
-        // TODO: Main gameplay loop (input, scoring, etc.)
+        // Update progress bars based on current stats
+        if (this.wpm > 0 || this.completedWords > 0) {
+            const { width, height } = this.scale;
+
+            // Update WPM visual meter
+            const wpmMeter = this.add.graphics();
+            wpmMeter.clear();
+            wpmMeter.fillStyle(0x222222, 1);
+            wpmMeter.fillRect(width / 2 - 50, height - 45, 100, 10);
+
+            // Fill based on percentage of goal reached
+            const wpmPercent = Math.min(this.wpm / this.minWPM, 1);
+            wpmMeter.fillStyle(
+                wpmPercent < 0.5 ? 0xdd5555 :
+                    wpmPercent < 0.8 ? 0xdddd55 : 0x55dd55,
+                1
+            );
+            wpmMeter.fillRect(width / 2 - 50, height - 45, 100 * wpmPercent, 10);
+
+            // Progress toward goal
+            const goalBar = this.add.graphics();
+            goalBar.clear();
+            goalBar.lineStyle(1, 0x444444, 1);
+            goalBar.strokeRect(width / 2 - 150, height - 15, 300, 6);
+
+            // Fill based on words completed
+            const wordPercent = Math.min(this.completedWords / this.minWords, 1);
+            goalBar.fillStyle(0x3333ff, 0.8);
+            goalBar.fillRect(width / 2 - 150, height - 15, 300 * wordPercent, 6);
+
+            // Set WPM color based on performance
+            if (this.wpmText) {
+                this.wpmText.setColor(
+                    this.wpm < this.minWPM * 0.5 ? '#dd5555' :
+                        this.wpm < this.minWPM * 0.8 ? '#dddd55' : '#55dd55'
+                );
+            }
+
+            // Set accuracy color based on performance
+            if (this.accuracyText) {
+                this.accuracyText.setColor(
+                    this.accuracy < this.minAccuracy * 0.8 ? '#dd5555' :
+                        this.accuracy < this.minAccuracy ? '#dddd55' : '#55ddff'
+                );
+            }
+        }
     }
 }
