@@ -4,7 +4,7 @@
 
 import Phaser from 'phaser';
 import { LevelConfig, getProgression, setProgression } from '@/types';
-import { HUD } from './HUD';
+import { HUD } from '../entities/HUD';
 import { World1Index } from '../levels/World1Index';
 import { World2Middle } from '../levels/World2Middle';
 import { World3Ring } from '../levels/World3Ring';

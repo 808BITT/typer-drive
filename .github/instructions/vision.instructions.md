@@ -44,13 +44,72 @@ The game is designed to be fun and engaging, with a focus on fast-paced action a
 
         HUD overlay tracks score, health, WPM, updated via public methods.
 
-    Quality & Testing
+    🛡️ Game Mode: Mob-Defense Typing
 
-        End-to-end tests (e.g., with Cypress) simulating typing flows.
+        Concept: Mobs march in from the right toward the player’s avatar on the left. Each mob carries one or more letters—typing them correctly destroys or weakens the mob before it reaches you. If a mob reaches the left, it damages your health bar.
 
-        Performance benchmarks (sprite counts, particle effects) documented in test scenarios.
+        Flow:
+            Spawn Wave: At set intervals, a wave of mobs is spawned at random vertical positions.
+            Advance: Each mob moves left at its own speed.
+            Player Action: Player types letters on the keyboard.
+                • On correct letter: mob.onTyped(letter) consumes the next target.
+                • On full depletion: mob destroyed with death VFX/SFX.
+            Damage: Mobs reaching the left call onReachPlayer() to deduct health.
+            Victory/Defeat: Survive N waves to win or health = 0 to lose.
 
-        CI pipeline verifies lint, build, and basic smoke tests on both client and server.
+        👾 Core Mob Types
+            Type                  HP / Letters      Behavior                              Notes
+            Normal Letter Mob     1 letter, 1 HP    Single character; TYPED⇒destroyed.    Base difficulty.
+            Tank Word Mob         Word (3–5 letters) Each keystroke removes first letter.  High HP progression.
+            Armored Letter Mob    2 letters, 2 HP    “Outer” letter reveal inner then type.  Mid-level challenge.
+
+        ✨ New Mob Types
+            Shielded Word Mob
+                HP: 1 shield + Word (4–6 letters)
+                Shield broken by typing “#” (or designated key), then acts like Tank Word Mob.
+            Regenerator Mob
+                HP: Word (3–5 letters)
+                After each correct keystroke starts 1 s timer; if it expires before next keystroke, last removed letter is re-added.
+            Split Word Mob
+                HP: Word (6 letters)
+                Typing first half splits into two 3-letter Tank Word Mobs advancing independently.
+            Stealth Letter Mob
+                HP: 1 letter, 1 HP
+                Letter fades invisible for 0.5 s cycles; can only be typed when visible.
+            Speedster Mob
+                HP: 2 letters, 2 HP
+                Moves at 2× speed; letters must be typed in order.
+            Boss Mob (End-of-Wave)
+                HP: Word/sentence (8–12 letters) + Phases
+                Phase 1: Tank Word; Phase 2: Armored Letter on random letters; Phase 3: Regenerator or Speedster combo.
+
+        ⚙️ Implementation Notes for Devs
+            Mob Class Structure:
+                interface MobConfig {
+                  id: string;
+                  letters: string[];          
+                  speed: number;              
+                  onTyped(letter: string): void;
+                  onReachPlayer(): void;
+                  render(): void;
+                  update(delta: number): void;
+                }
+            Spawning System:
+                class MobSpawner {
+                  spawnInterval: number;
+                  waveCount: number;
+                  spawnQueue: MobConfig[];
+                  startWave(): void;
+                  update(time: number): void;
+                }
+            Typing Input Handler:
+                • Listen for keydown events.
+                • Keep visible mobs sorted by proximity.
+                • On key press, match key to first mob.letters[0], call mob.onTyped() or miss VFX.
+            Animations & VFX:
+                Normal Hit: green flash; Miss: red spark; Destruction: explosion particle; Split: pop effect.
+            Balancing Parameters:
+                Tune speed, spawnInterval, health/letters per difficulty or wave.
 
 3. Contribution Workflow
 
@@ -153,3 +212,5 @@ The game is designed to be fun and engaging, with a focus on fast-paced action a
     Changelog: Maintain CHANGELOG.md with “Added/Changed/Fixed” sections per release.
 
     GitHub Releases: Draft a release from each tag, summarizing new features, improvements, and fixes.
+
+Contains AI-generated edits.
