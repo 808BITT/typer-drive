@@ -17,6 +17,24 @@ export class GameScene extends Phaser.Scene {
     private letterText?: Phaser.GameObjects.Text;
     private score: number = 0;
     private scoreText?: Phaser.GameObjects.Text;
+    private targetString: string = '';
+    private inputString: string = '';
+    private inputText?: Phaser.GameObjects.Text;
+    private wpm: number = 0;
+    private accuracy: number = 100;
+    private wpmText?: Phaser.GameObjects.Text;
+    private accuracyText?: Phaser.GameObjects.Text;
+    private startTime: number = 0;
+    private totalTyped: number = 0;
+    private totalCorrect: number = 0;
+    private previousWords: Phaser.GameObjects.Text[] = [];
+    private minWords: number = 10; // Example goal
+    private minWPM: number = 20;
+    private minAccuracy: number = 90;
+    private completedWords: number = 0;
+    private goalText?: Phaser.GameObjects.Text;
+    private resultText?: Phaser.GameObjects.Text;
+    private previousWordsY: number = 0;
 
     constructor() {
         super({ key: 'GameScene' });
@@ -39,6 +57,8 @@ export class GameScene extends Phaser.Scene {
 
     create() {
         const { width, height } = this.scale;
+        // Move the target and input higher up
+        const centerY = height / 2 - 60;
         this.add.text(width / 2, 80, `Typing: ${this.levelConfig.name}`, {
             fontFamily: 'Arial',
             fontSize: '32px',
@@ -66,48 +86,214 @@ export class GameScene extends Phaser.Scene {
             this.scene.start('LevelSelectScene');
         });
 
-        // Show the first letter to type
-        if (this.letters && this.letters.length > 0) {
-            this.currentLetterIndex = 0;
-            this.letterText = this.add.text(width / 2, height / 2, `Type: ${this.letters[this.currentLetterIndex]}`, {
-                fontFamily: 'Arial',
-                fontSize: '48px',
-                color: '#ff0',
-                align: 'center',
-                fontStyle: 'bold',
-                stroke: '#000',
-                strokeThickness: 6
-            }).setOrigin(0.5);
-        }
-
         // Score display
-        this.scoreText = this.add.text(width - 40, 30, `Score: 0`, {
+        this.scoreText = this.add.text(40, height - 60, `Score: 0`, {
             fontFamily: 'Arial',
             fontSize: '24px',
             color: '#fff',
-            align: 'right',
+            align: 'left',
             stroke: '#222',
             strokeThickness: 3
+        }).setOrigin(0, 0.5);
+
+        // WPM and Accuracy meters
+        this.wpmText = this.add.text(width / 2, height - 60, `WPM: 0`, {
+            fontFamily: 'Arial',
+            fontSize: '20px',
+            color: '#0f0',
+            align: 'center',
+            stroke: '#222',
+            strokeThickness: 2
+        }).setOrigin(0.5, 0.5);
+        this.accuracyText = this.add.text(width - 40, height - 60, `Accuracy: 100%`, {
+            fontFamily: 'Arial',
+            fontSize: '20px',
+            color: '#0ff',
+            align: 'right',
+            stroke: '#222',
+            strokeThickness: 2
         }).setOrigin(1, 0.5);
+
+        // Goal display
+        this.goalText = this.add.text(width / 2, height - 30, `Goal: ${this.minWords} words, ${this.minWPM} WPM, ${this.minAccuracy}% accuracy`, {
+            fontFamily: 'Arial',
+            fontSize: '18px',
+            color: '#fff',
+            align: 'center',
+            stroke: '#222',
+            strokeThickness: 2
+        }).setOrigin(0.5);
+
+        // Generate first target string
+        this.generateTargetString();
+        this.inputString = '';
+        this.inputText = this.add.text(width / 2, centerY + 60, '', {
+            fontFamily: 'Arial',
+            fontSize: '40px',
+            color: '#fff',
+            align: 'center',
+            stroke: '#000',
+            strokeThickness: 4
+        }).setOrigin(0.5);
+
+        // Show target string (move up)
+        this.letterText = this.add.text(width / 2, centerY, this.targetString, {
+            fontFamily: 'Arial',
+            fontSize: '48px',
+            color: '#ff0',
+            align: 'center',
+            fontStyle: 'bold',
+            stroke: '#000',
+            strokeThickness: 6
+        }).setOrigin(0.5);
+
+        // Previous words list (now below input/current)
+        this.previousWords = [];
+        this.previousWordsY = centerY + 120;
+
+        // Move stats to the bottom (HUD style)
+        this.scoreText = this.add.text(40, height - 60, `Score: 0`, {
+            fontFamily: 'Arial',
+            fontSize: '24px',
+            color: '#fff',
+            align: 'left',
+            stroke: '#222',
+            strokeThickness: 3
+        }).setOrigin(0, 0.5);
+        this.wpmText = this.add.text(width / 2, height - 60, `WPM: 0`, {
+            fontFamily: 'Arial',
+            fontSize: '20px',
+            color: '#0f0',
+            align: 'center',
+            stroke: '#222',
+            strokeThickness: 2
+        }).setOrigin(0.5, 0.5);
+        this.accuracyText = this.add.text(width - 40, height - 60, `Accuracy: 100%`, {
+            fontFamily: 'Arial',
+            fontSize: '20px',
+            color: '#0ff',
+            align: 'right',
+            stroke: '#222',
+            strokeThickness: 2
+        }).setOrigin(1, 0.5);
+        this.goalText = this.add.text(width / 2, height - 30, `Goal: ${this.minWords} words, ${this.minWPM} WPM, ${this.minAccuracy}% accuracy`, {
+            fontFamily: 'Arial',
+            fontSize: '18px',
+            color: '#fff',
+            align: 'center',
+            stroke: '#222',
+            strokeThickness: 2
+        }).setOrigin(0.5);
+
+        this.startTime = this.time.now;
+        this.totalTyped = 0;
+        this.totalCorrect = 0;
 
         // Keyboard input
         this.input.keyboard?.on('keydown', (event: KeyboardEvent) => {
-            if (!this.letters || !this.letterText) return;
-            const expected = this.letters[this.currentLetterIndex];
-            if (event.key.toUpperCase() === expected) {
-                this.score += 1;
-                this.scoreText?.setText(`Score: ${this.score}`);
-                // Next letter (cycle through letters)
-                this.currentLetterIndex = (this.currentLetterIndex + 1) % this.letters.length;
-                this.letterText.setText(`Type: ${this.letters[this.currentLetterIndex]}`);
+            if (!this.letters || !this.letterText || !this.inputText) return;
+            if (event.key.length !== 1) return;
+            if (this.inputString.length >= this.targetString.length) return;
+            const expectedChar = this.targetString[this.inputString.length];
+            const typedChar = event.key.toUpperCase();
+            this.totalTyped++;
+            let correct = false;
+            if (typedChar === expectedChar) {
+                this.inputString += typedChar;
+                this.totalCorrect++;
+                this.inputText.setText(this.inputString);
+                this.inputText.setColor('#0f0');
+                correct = true;
             } else {
-                // Optional: feedback for wrong key
-                this.letterText.setColor('#f00');
-                this.time.delayedCall(150, () => {
-                    this.letterText?.setColor('#ff0');
-                });
+                this.inputString += typedChar;
+                this.inputText.setText(this.inputString);
+                this.inputText.setColor('#f00');
+            }
+            this.updateAccuracy();
+            if (this.inputString.length === this.targetString.length) {
+                // Completed string
+                this.score += correct ? 1 : 0;
+                this.completedWords++;
+                this.scoreText?.setText(`Score: ${this.score}`);
+                // Slide previous words down and fade
+                this.showPreviousWord(this.targetString, correct);
+                this.inputString = '';
+                this.generateTargetString();
+                this.letterText.setText(this.targetString);
+                this.inputText.setText('');
+                this.inputText.setColor('#fff');
+                this.updateWPM();
+                this.checkGoal();
             }
         });
+    }
+
+    private generateTargetString() {
+        // Pick 5 random letters from this.letters
+        this.targetString = Array.from({ length: 5 }, () => {
+            const idx = Math.floor(Math.random() * this.letters.length);
+            return this.letters[idx];
+        }).join('');
+    }
+
+    private updateWPM() {
+        const elapsedMinutes = (this.time.now - this.startTime) / 60000;
+        this.wpm = elapsedMinutes > 0 ? Math.round((this.score * 5) / elapsedMinutes) : 0;
+        this.wpmText?.setText(`WPM: ${this.wpm}`);
+    }
+
+    private updateAccuracy() {
+        this.accuracy = this.totalTyped > 0 ? Math.round((this.totalCorrect / this.totalTyped) * 100) : 100;
+        this.accuracyText?.setText(`Accuracy: ${this.accuracy}%`);
+    }
+
+    private showPreviousWord(word: string, correct: boolean) {
+        const { width } = this.scale;
+        // Move existing previous words down and fade
+        this.previousWords.forEach((txt, i) => {
+            this.tweens.add({
+                targets: txt,
+                y: txt.y + 40,
+                alpha: 0.5 - i * 0.2,
+                duration: 200,
+                onComplete: () => {
+                    if (i >= 1) txt.destroy();
+                }
+            });
+        });
+        // Add new word below the current word
+        const color = correct ? '#0f0' : '#f00';
+        const prev = this.add.text(width / 2, this.previousWordsY, word, {
+            fontFamily: 'Arial',
+            fontSize: '32px',
+            color,
+            align: 'center',
+            stroke: '#000',
+            strokeThickness: 4
+        }).setOrigin(0.5);
+        prev.setAlpha(1);
+        this.previousWords.unshift(prev);
+        // Keep only 2 previous
+        if (this.previousWords.length > 2) {
+            const removed = this.previousWords.pop();
+            removed?.destroy();
+        }
+    }
+
+    private checkGoal() {
+        if (this.completedWords >= this.minWords && this.wpm >= this.minWPM && this.accuracy >= this.minAccuracy) {
+            if (!this.resultText) {
+                const { width, height } = this.scale;
+                this.resultText = this.add.text(width / 2, height / 2 + 120, 'Goal Achieved!', {
+                    fontFamily: 'Arial',
+                    fontSize: '36px',
+                    color: '#0f0',
+                    align: 'center',
+                    stroke: '#000',
+                    strokeThickness: 4
+                }).setOrigin(0.5);
+            }
+        }
     }
 
     update(time: number, delta: number) {
