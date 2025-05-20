@@ -60,14 +60,17 @@ export class HUD {
         this.hudBg.setPipeline && this.hudBg.setPipeline('Light2D');
 
         // Goal display at the top, more prominent and spaced
-        const goalBg = this.scene.add.rectangle(this.width / 2, 28, 520, 54, 0x222244, 0.85)
+        // Moved down to avoid overlap with level title
+        const goalBgY = 90 + 20;
+        const goalTextY = 116 + 20;
+        const goalBg = this.scene.add.rectangle(this.width / 2, goalBgY, 520, 54, 0x222244, 0.85)
             .setOrigin(0.5, 0)
             .setStrokeStyle(3, 0x22aaff, 0.8)
             .setAlpha(0.96)
             .setDepth(1);
         goalBg.setPipeline && goalBg.setPipeline('Light2D');
 
-        this.goalText = this.scene.add.text(this.width / 2, 54,
+        this.goalText = this.scene.add.text(this.width / 2, goalTextY,
             `Goal: ${this.minWords} words, ${this.minWPM} WPM, ${this.minAccuracy}% accuracy`, {
                 fontFamily: 'Arial Black',
                 fontSize: '22px',
