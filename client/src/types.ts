@@ -11,3 +11,15 @@ export interface LevelConfig {
     letters: string[];
     boss: boolean;
 }
+
+// Utility for progression lock/unlock
+export function getProgression(): Record<string, boolean> {
+    try {
+        return JSON.parse(localStorage.getItem('progression') || '{}');
+    } catch {
+        return {};
+    }
+}
+export function setProgression(prog: Record<string, boolean>) {
+    localStorage.setItem('progression', JSON.stringify(prog));
+}

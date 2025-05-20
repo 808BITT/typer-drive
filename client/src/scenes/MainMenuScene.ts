@@ -18,7 +18,7 @@ export class MainMenuScene extends Phaser.Scene {
     private options: MenuOption[];
 
     constructor(sceneKey = 'MainMenu', options: MenuOption[] = [
-        { text: 'Level Selector', target: 'LevelSelectScene' },
+        { text: 'World Selector', target: 'WorldSelectScene' },
         { text: 'Statistics', target: 'StatisticsScene' },
         { text: 'Settings', target: 'SettingsScene' }
     ]) {

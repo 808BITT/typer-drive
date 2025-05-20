@@ -1,6 +1,5 @@
-// HUD.ts - Heads-Up Display for Typing Game
-// Extracted from GameScene for modularity and clarity
-// Auto-generated on 2025-05-19
+// HUD.ts - Enhanced Heads-Up Display for Typing Game with animations and visuals
+// Updated on 2025-05-19
 
 import Phaser from 'phaser';
 
@@ -18,14 +17,23 @@ export class HUD {
     private minWPM: number;
     private minAccuracy: number;
 
-    scoreText?: Phaser.GameObjects.Text;
+    // UI Elements
     wpmText?: Phaser.GameObjects.Text;
     accuracyText?: Phaser.GameObjects.Text;
     goalText?: Phaser.GameObjects.Text;
     hudBg?: Phaser.GameObjects.Rectangle;
     wpmMeter?: Phaser.GameObjects.Graphics;
+    wpmFill?: Phaser.GameObjects.Graphics;
+    accuracyMeter?: Phaser.GameObjects.Graphics;
+    accuracyFill?: Phaser.GameObjects.Graphics;
     goalBar?: Phaser.GameObjects.Graphics;
+    goalFill?: Phaser.GameObjects.Graphics;
     goalBarWidth: number = 300;
+    
+    // Animation properties
+    private progressTween?: Phaser.Tweens.Tween;
+    private particleEmitter?: Phaser.GameObjects.Particles.ParticleEmitter;
+    private glowFx?: Phaser.FX.Glow;
 
     constructor(scene: Phaser.Scene, options: HUDOptions) {
         this.scene = scene;
@@ -41,38 +49,30 @@ export class HUD {
         this.hudBg = this.scene.add.rectangle(this.width / 2, this.height - 50, this.width, 80, 0x000000, 0.7)
             .setOrigin(0.5, 0.5)
             .setStrokeStyle(1, 0x3333ff, 0.5);
-        this.scoreText = this.scene.add.text(40, this.height - 60, `Score: 0`, {
+        this.wpmText = this.scene.add.text(40, this.height - 60, `WPM: 0`, {
             fontFamily: 'Arial',
             fontSize: '24px',
-            color: '#fff',
+            color: '#0f0',
             align: 'left',
             stroke: '#222',
             strokeThickness: 3
         }).setOrigin(0, 0.5);
-        this.wpmText = this.scene.add.text(this.width / 2, this.height - 60, `WPM: 0`, {
+        this.accuracyText = this.scene.add.text(this.width / 2, this.height - 60, `Accuracy: 100%`, {
             fontFamily: 'Arial',
             fontSize: '20px',
-            color: '#0f0',
+            color: '#0ff',
             align: 'center',
             stroke: '#222',
             strokeThickness: 2
         }).setOrigin(0.5, 0.5);
-        this.accuracyText = this.scene.add.text(this.width - 40, this.height - 60, `Accuracy: 100%`, {
+        this.goalText = this.scene.add.text(this.width - 40, this.height - 60, `Goal: ${this.minWords} words, ${this.minWPM} WPM, ${this.minAccuracy}% accuracy`, {
             fontFamily: 'Arial',
-            fontSize: '20px',
-            color: '#0ff',
+            fontSize: '18px',
+            color: '#fff',
             align: 'right',
             stroke: '#222',
             strokeThickness: 2
         }).setOrigin(1, 0.5);
-        this.goalText = this.scene.add.text(this.width / 2, this.height - 30, `Goal: ${this.minWords} words, ${this.minWPM} WPM, ${this.minAccuracy}% accuracy`, {
-            fontFamily: 'Arial',
-            fontSize: '18px',
-            color: '#fff',
-            align: 'center',
-            stroke: '#222',
-            strokeThickness: 2
-        }).setOrigin(0.5);
         this.goalBar = this.scene.add.graphics();
         this.goalBar.lineStyle(1, 0x444444, 1);
         this.goalBar.strokeRect(this.width / 2 - this.goalBarWidth / 2, this.height - 15, this.goalBarWidth, 6);
@@ -83,10 +83,6 @@ export class HUD {
             fontSize: '12px',
             color: '#fff'
         }).setOrigin(0.5, 0);
-    }
-
-    updateScore(score: number) {
-        this.scoreText?.setText(`Score: ${score}`);
     }
 
     updateWPM(wpm: number) {
