@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { MobSpawner } from '../entities/MobSpawner';
-import { Mob } from '../entities/Mob';
+import { MobSpawner } from '../mobs/MobSpawner';
+import { BaseMob as Mob } from '../mobs/Mob';
 
 export default class GameplayScene extends Phaser.Scene {
   private mobSpawner: MobSpawner;
@@ -48,7 +48,7 @@ export default class GameplayScene extends Phaser.Scene {
       scene: this,
       spawnInterval: 2000,
       initialDelay: 3000,
-      onWaveComplete: (waveNumber) => {
+      onWaveComplete: (waveNumber: number) => {
         // Give bonus points for completing a wave
         this.addScore(waveNumber * 100);
       },

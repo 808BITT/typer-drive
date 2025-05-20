@@ -1,3 +1,7 @@
+// This file is deprecated. Use mobs/MobSpawner.ts instead.
+
+// Contains AI-generated edits.
+
 import Phaser from 'phaser';
 import { Mob, createMob } from './Mob';
 
@@ -17,8 +21,8 @@ export class MobSpawner {
   private spawnInterval: number;
   private waveCount: number = 0;
   private currentWave: number = 0;
-  private spawnTimer: Phaser.Time.TimerEvent;
-  private mobs: Mob[] = [];
+  private spawnTimer?: Phaser.Time.TimerEvent;
+  private mobs: Map<string, Mob> = new Map();
   private mobsInCurrentWave: number = 0;
   private mobsDestroyedInCurrentWave: number = 0;
   private waveConfig: any[] = [];
@@ -153,33 +157,18 @@ export class MobSpawner {
   
   private spawnMob(): void {
     if (!this.isSpawning) return;
-    
     const wave = this.waveConfig[this.currentWave];
-    
-    // Select a random mob type based on weights
     const mobType = this.selectMobType(wave.types, wave.weights);
-    
-    // Random Y position within bounds
     const y = Math.random() * (this.yMax - this.yMin) + this.yMin;
-    
-    // Create the mob
     const mob = createMob(this.scene, this.xPos, y, mobType);
-    
-    // Add to tracking array
-    this.mobs.push(mob);
-    
-    // Set up callback for when mob is destroyed
+    this.mobs.set(mob.getMobId(), mob);
     const originalDestroy = mob.destroy;
     mob.destroy = () => {
-      this.mobs = this.mobs.filter(m => m !== mob);
+      this.mobs.delete(mob.getMobId());
       this.mobsDestroyedInCurrentWave++;
-      
-      // Check if wave is complete
       if (this.mobsDestroyedInCurrentWave >= this.mobsInCurrentWave) {
         this.waveComplete();
       }
-      
-      // Call original destroy method
       originalDestroy.call(mob);
     };
   }
@@ -218,7 +207,7 @@ export class MobSpawner {
   }
   
   // Get active mobs for the typing system to find matches
-  getActiveMobs(): Mob[] {
+  getMobs(): Map<string, Mob> {
     return this.mobs;
   }
   

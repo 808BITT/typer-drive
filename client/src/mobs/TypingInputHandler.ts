@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { IMob } from './Mob';
+import type { IMob, MobConfig } from '../mobs/Mob';
 
 export class TypingInputHandler {
   private scene: Phaser.Scene;
@@ -17,7 +17,7 @@ export class TypingInputHandler {
     this.mobGetter = config.mobGetter;
     this.missCallback = config.missCallback || (() => {});
     this.typedCallback = config.typedCallback || (() => {});
-    this.keyPressListeners = scene.input.keyboard;
+    this.keyPressListeners = scene.input.keyboard!;
     
     this.setupKeyboardListeners();
   }
@@ -39,7 +39,7 @@ export class TypingInputHandler {
     // Sort mobs by proximity to player (left side of screen)
     const sortedMobs = Array.from(mobs.values())
       .filter(mob => mob.active)
-      .sort((a, b) => a.position.x - b.position.x);
+      .sort((a, b) => a.mobPosition.x - b.mobPosition.x);
     
     if (sortedMobs.length === 0) return;
     
@@ -58,7 +58,7 @@ export class TypingInputHandler {
       this.missCallback();
       
       // Create a miss visual effect
-      const missEffect = this.scene.add.particles(100, sortedMobs[0].position.y, 'miss-particle', {
+      const missEffect = this.scene.add.particles(100, sortedMobs[0].mobPosition.y, 'miss-particle', {
         lifespan: 300,
         speed: { min: 50, max: 80 },
         scale: { start: 0.5, end: 0 },
@@ -83,5 +83,3 @@ export class TypingInputHandler {
     this.keyPressListeners.off('keydown');
   }
 }
-
-// Contains AI-generated edits.

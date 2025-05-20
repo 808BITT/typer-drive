@@ -433,5 +433,3 @@ export class MobSpawner {
     this.scene.events.off('spawn-split-mobs', this.handleSplitMobs, this);
   }
 }
-
-// Contains AI-generated edits.

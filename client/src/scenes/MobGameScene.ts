@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { MobSpawner } from '../entities/MobSpawner';
-import { TypingInputHandler } from '../entities/TypingInputHandler';
+import { MobSpawner } from '../mobs/MobSpawner';
+import { TypingInputHandler } from '../mobs/TypingInputHandler';
 
 export class MobGameScene extends Phaser.Scene {
   private mobSpawner!: MobSpawner;
@@ -62,7 +62,7 @@ export class MobGameScene extends Phaser.Scene {
       initialSpawnInterval: 2000,
       gameWidth: this.game.canvas.width,
       gameHeight: this.game.canvas.height,
-      onWaveComplete: (waveNumber) => {
+      onWaveComplete: (waveNumber: number) => {
         // Maybe give a bonus score or health for completing a wave
         this.updateScore(waveNumber * 50);
         this.updateHealth(10); // Heal a bit between waves
@@ -78,11 +78,10 @@ export class MobGameScene extends Phaser.Scene {
         this.updateScore(-5);
         this.sound.play('miss');
       },
-      typedCallback: (letter, success) => {
+      typedCallback: (_letter, success) => {
         // Track typing stats
         this.typedKeys++;
         this.calculateWPM();
-        
         if (success) {
           this.sound.play('hit');
         }
@@ -93,7 +92,7 @@ export class MobGameScene extends Phaser.Scene {
     this.events.on('player-damaged', this.onPlayerDamaged, this);
     
     // Listen for score updates
-    this.events.on('score-updated', this.updateScore, this);
+    this.events.on('score-updated', (points: number) => this.updateScore(points));
     
     // Listen for game win/lose conditions
     this.events.on('game-won', this.onGameWon, this);
@@ -265,9 +264,11 @@ export class MobGameScene extends Phaser.Scene {
     restartText.setOrigin(0.5);
     
     // Add restart listener
-    this.input.keyboard.once('keydown-SPACE', () => {
-      this.scene.restart();
-    });
+    if (this.input.keyboard) {
+      this.input.keyboard.once('keydown-SPACE', () => {
+        this.scene.restart();
+      });
+    }
   }
 
   private onGameWon(): void {
@@ -316,9 +317,11 @@ export class MobGameScene extends Phaser.Scene {
     continueText.setOrigin(0.5);
     
     // Add continue listener
-    this.input.keyboard.once('keydown-SPACE', () => {
-      this.scene.start('MainMenuScene');
-    });
+    if (this.input.keyboard) {
+      this.input.keyboard.once('keydown-SPACE', () => {
+        this.scene.start('MainMenuScene');
+      });
+    }
   }
 
   update(time: number, delta: number): void {
@@ -336,12 +339,12 @@ export class MobGameScene extends Phaser.Scene {
 
   shutdown(): void {
     // Clean up
-    this.mobSpawner.cleanup();
+    // this.mobSpawner.cleanup(); // Removed because MobSpawner has no cleanup method
     this.typingHandler.cleanup();
     
     // Remove event listeners
     this.events.off('player-damaged', this.onPlayerDamaged, this);
-    this.events.off('score-updated', this.updateScore, this);
+    this.events.off('score-updated');
     this.events.off('game-won', this.onGameWon, this);
   }
 }

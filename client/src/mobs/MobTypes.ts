@@ -1,12 +1,12 @@
 import Phaser from 'phaser';
-import { BaseMob, MobConfig, MobEffects } from './Mob';
+import { BaseMob, MobEffects } from '../mobs/Mob';
 
 export class NormalLetterMob extends BaseMob {
-  constructor(config: MobConfig) {
+  constructor(config: any) {
     super(config);
   }
 
-  onTyped(letter: string): boolean {
+  onTyped(letter: any) {
     if (this.letters[this.currentLetterIndex] === letter) {
       // Correct key was typed
       MobEffects.createHitEffect(this.scene, this.x, this.y);
@@ -26,11 +26,11 @@ export class NormalLetterMob extends BaseMob {
 }
 
 export class TankWordMob extends BaseMob {
-  constructor(config: MobConfig) {
+  constructor(config: any) {
     super(config);
   }
 
-  onTyped(letter: string): boolean {
+  onTyped(letter: any) {
     if (this.letters[this.currentLetterIndex] === letter) {
       // Correct key was typed
       MobEffects.createHitEffect(this.scene, this.x, this.y);
@@ -61,13 +61,14 @@ export class TankWordMob extends BaseMob {
 }
 
 export class ArmoredLetterMob extends BaseMob {
-  private armorIntact: boolean = true;
-  
-  constructor(config: MobConfig) {
+  armorIntact: boolean;
+
+  constructor(config: any) {
     super(config);
+    this.armorIntact = true;
   }
 
-  onTyped(letter: string): boolean {
+  onTyped(letter: any) {
     if (this.letters[this.currentLetterIndex] === letter) {
       // Correct key was typed
       MobEffects.createHitEffect(this.scene, this.x, this.y);
@@ -98,7 +99,7 @@ export class ArmoredLetterMob extends BaseMob {
     return false;
   }
 
-  render(): void {
+  render() {
     super.render();
     
     // Add armor visual
@@ -112,15 +113,16 @@ export class ArmoredLetterMob extends BaseMob {
 }
 
 export class ShieldedWordMob extends BaseMob {
-  private shielded: boolean = true;
-  private shieldKey: string = '#';
-  
-  constructor(config: MobConfig, shieldKey: string = '#') {
+  shielded: boolean;
+  shieldKey: string;
+
+  constructor(config: any, shieldKey = '#') {
     super(config);
+    this.shielded = true;
     this.shieldKey = shieldKey;
   }
 
-  onTyped(letter: string): boolean {
+  onTyped(letter: any) {
     if (this.shielded) {
       if (letter === this.shieldKey) {
         // Break shield
@@ -154,7 +156,7 @@ export class ShieldedWordMob extends BaseMob {
     return false;
   }
 
-  render(): void {
+  render() {
     super.render();
     
     if (this.shielded) {
@@ -183,14 +185,16 @@ export class ShieldedWordMob extends BaseMob {
 }
 
 export class RegeneratorMob extends BaseMob {
-  private regenerationTimer: Phaser.Time.TimerEvent | null = null;
-  private removedLetters: string[] = [];
-  
-  constructor(config: MobConfig) {
+  regenerationTimer: any;
+  removedLetters: string[];
+
+  constructor(config: any) {
     super(config);
+    this.regenerationTimer = null;
+    this.removedLetters = [];
   }
 
-  onTyped(letter: string): boolean {
+  onTyped(letter: any) {
     if (this.letters[this.currentLetterIndex] === letter) {
       // Correct key was typed
       MobEffects.createHitEffect(this.scene, this.x, this.y);
@@ -227,7 +231,7 @@ export class RegeneratorMob extends BaseMob {
     return false;
   }
 
-  private regenerateLetter(): void {
+  regenerateLetter() {
     if (this.removedLetters.length > 0 && this.currentLetterIndex > 0) {
       // Regenerate the last removed letter
       this.currentLetterIndex--;
@@ -253,7 +257,7 @@ export class RegeneratorMob extends BaseMob {
     }
   }
 
-  destroy(): void {
+  destroy() {
     if (this.regenerationTimer) {
       this.regenerationTimer.remove();
     }
@@ -262,10 +266,11 @@ export class RegeneratorMob extends BaseMob {
 }
 
 export class SplitWordMob extends BaseMob {
-  private hasSplit: boolean = false;
-  
-  constructor(config: MobConfig) {
+  hasSplit: boolean;
+
+  constructor(config: any) {
     super(config);
+    this.hasSplit = false;
     
     // Make sure we have enough letters to split
     if (config.letters.length < 6) {
@@ -277,7 +282,7 @@ export class SplitWordMob extends BaseMob {
     }
   }
 
-  onTyped(letter: string): boolean {
+  onTyped(letter: any) {
     if (this.letters[this.currentLetterIndex] === letter) {
       // Correct key was typed
       MobEffects.createHitEffect(this.scene, this.x, this.y);
@@ -306,7 +311,7 @@ export class SplitWordMob extends BaseMob {
     return false;
   }
 
-  private splitMob(): void {
+  splitMob() {
     // Create split effect
     const splitEffect = this.scene.add.particles(this.x, this.y, 'split-particle', {
       lifespan: 500,
@@ -352,16 +357,20 @@ export class SplitWordMob extends BaseMob {
 }
 
 export class StealthLetterMob extends BaseMob {
-  private visibilityTimer: Phaser.Time.TimerEvent | null = null;
-  private isVisible: boolean = true;
-  private visibilityDuration: number = 500; // ms
-  
-  constructor(config: MobConfig) {
+  visibilityTimer: any;
+  isVisible: boolean;
+  visibilityDuration: number;
+
+  constructor(config: any) {
     super(config);
+    this.visibilityTimer = null;
+    this.isVisible = true;
+    this.visibilityDuration = 500; // ms
+    
     this.startVisibilityToggle();
   }
 
-  onTyped(letter: string): boolean {
+  onTyped(letter: any) {
     // Can only be typed when visible
     if (!this.isVisible) return false;
     
@@ -382,7 +391,7 @@ export class StealthLetterMob extends BaseMob {
     return false;
   }
 
-  private startVisibilityToggle(): void {
+  startVisibilityToggle() {
     this.visibilityTimer = this.scene.time.addEvent({
       delay: this.visibilityDuration,
       callback: this.toggleVisibility,
@@ -391,12 +400,12 @@ export class StealthLetterMob extends BaseMob {
     });
   }
 
-  private toggleVisibility(): void {
+  toggleVisibility() {
     this.isVisible = !this.isVisible;
     this.setAlpha(this.isVisible ? 1 : 0);
   }
 
-  destroy(): void {
+  destroy() {
     if (this.visibilityTimer) {
       this.visibilityTimer.remove();
     }
@@ -405,13 +414,13 @@ export class StealthLetterMob extends BaseMob {
 }
 
 export class SpeedsterMob extends BaseMob {
-  constructor(config: MobConfig) {
+  constructor(config: any) {
     // Speedster mobs move twice as fast
     config.speed *= 2;
     super(config);
   }
 
-  onTyped(letter: string): boolean {
+  onTyped(letter: any) {
     if (this.letters[this.currentLetterIndex] === letter) {
       // Correct key was typed
       MobEffects.createHitEffect(this.scene, this.x, this.y);
@@ -442,12 +451,15 @@ export class SpeedsterMob extends BaseMob {
 }
 
 export class BossMob extends BaseMob {
-  private phase: number = 1;
-  private maxPhases: number = 3;
-  private phaseHealth: number[] = [];
-  
-  constructor(config: MobConfig) {
+  phase: number;
+  maxPhases: number;
+  phaseHealth: number[];
+
+  constructor(config: any) {
     super(config);
+    this.phase = 1;
+    this.maxPhases = 3;
+    this.phaseHealth = [];
     
     // Setup phase health based on letter length
     const lettersPerPhase = Math.ceil(this.letters.length / this.maxPhases);
@@ -459,7 +471,7 @@ export class BossMob extends BaseMob {
     this.speed *= 0.7;
   }
 
-  onTyped(letter: string): boolean {
+  onTyped(letter: any) {
     if (this.letters[this.currentLetterIndex] === letter) {
       // Correct key was typed
       MobEffects.createHitEffect(this.scene, this.x, this.y);
@@ -492,7 +504,7 @@ export class BossMob extends BaseMob {
     return false;
   }
 
-  private advancePhase(): void {
+  advancePhase() {
     this.phase++;
     
     // Phase transition effect
@@ -517,7 +529,7 @@ export class BossMob extends BaseMob {
     this.scene.events.emit('boss-phase-changed', this.phase);
   }
 
-  render(): void {
+  render() {
     super.render();
     
     // Add phase-specific visuals
@@ -577,5 +589,3 @@ export class BossMob extends BaseMob {
     this.add(healthBar);
   }
 }
-
-// Contains AI-generated edits.

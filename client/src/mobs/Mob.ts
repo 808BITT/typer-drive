@@ -14,7 +14,7 @@ export interface IMob {
   letters: string[];
   speed: number;
   active: boolean;
-  position: Phaser.Math.Vector2;
+  mobPosition: Phaser.Math.Vector2;
   onTyped(letter: string): boolean;
   onReachPlayer(): void;
   render(): void;
@@ -27,7 +27,6 @@ export abstract class BaseMob extends Phaser.GameObjects.Container implements IM
   letters: string[];
   speed: number;
   active: boolean = true;
-  position: Phaser.Math.Vector2;
   protected currentLetterIndex: number = 0;
   protected textObjects: Phaser.GameObjects.Text[] = [];
   protected playerPosition: number;
@@ -38,12 +37,21 @@ export abstract class BaseMob extends Phaser.GameObjects.Container implements IM
     this.id = config.id;
     this.letters = config.letters;
     this.speed = config.speed;
-    this.position = new Phaser.Math.Vector2(config.x, config.y);
+    this.mobPosition = new Phaser.Math.Vector2(config.x, config.y);
     this.playerPosition = 100; // Default player position on the left
     
     config.scene.add.existing(this);
     this.render();
   }
+    get mobPosition(): Phaser.Math.Vector2 {
+        return new Phaser.Math.Vector2(this.x, this.y);
+    }
+
+    set mobPosition(value: Phaser.Math.Vector2) {
+        this.x = value.x;
+        this.y = value.y;
+    }
+
 
   abstract onTyped(letter: string): boolean;
 
@@ -74,7 +82,7 @@ export abstract class BaseMob extends Phaser.GameObjects.Container implements IM
   update(delta: number): void {
     // Move left toward player
     this.x -= this.speed * delta / 1000;
-    this.position.x = this.x;
+    this.mobPosition.x = this.x;
     
     // Check if reached player
     if (this.x <= this.playerPosition) {
@@ -126,5 +134,3 @@ export class MobEffects {
     });
   }
 }
-
-// Contains AI-generated edits.

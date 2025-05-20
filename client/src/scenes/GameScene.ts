@@ -372,3 +372,5 @@ function getCurrentWorldAndLevel(levelId: string) {
   }
   return null;
 }
+
+// Contains AI-generated edits.
