@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
+import { GameScene } from './scenes/GameScene';
 import { LevelSceneIndex1 } from './scenes/LevelSceneIndex1';
 import { LevelSelectScene } from './scenes/LevelSelectScene';
 import { MainMenuScene } from './scenes/MainMenuScene';
@@ -9,7 +10,7 @@ const config: Phaser.Types.Core.GameConfig = {
     width: 800,
     height: 600,
     parent: 'game-container',
-    scene: [BootScene, MainMenuScene, LevelSelectScene, LevelSceneIndex1]
+    scene: [BootScene, MainMenuScene, LevelSelectScene, GameScene, LevelSceneIndex1]
 };
 
 window.addEventListener('load', () => {

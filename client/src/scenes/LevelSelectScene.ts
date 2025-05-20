@@ -56,10 +56,8 @@ export class LevelSelectScene extends Phaser.Scene {
             button.on('pointerover', () => button.setFillStyle(buttonHoverColor));
             button.on('pointerout', () => button.setFillStyle(buttonColor));
             button.on('pointerdown', () => {
-                // TODO: Start the appropriate level scene
-                // For now, just log the level id
-                console.log('Selected level:', level.id);
-                // Example: this.scene.start('LevelSceneIndex1');
+                // Start the GameScene and pass the selected level config
+                this.scene.start('GameScene', { levelConfig: level });
             });
         });
     }
