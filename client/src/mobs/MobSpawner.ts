@@ -47,12 +47,22 @@ export class MobSpawner {
     this.setupWaves();
   }
 
+  private getDynamicSpawnInterval(waveNumber: number): number {
+    // Exponential decay for smoother scaling
+    const minInterval = 400; // ms, minimum spawn interval
+    const decayRate = 0.13; // how quickly it ramps up
+    return Math.max(
+      minInterval,
+      this.spawnInterval * Math.exp(-decayRate * waveNumber)
+    );
+  }
+
   private setupWaves(): void {
-    // Only single letter mobs in all waves
+    // Smooth spawn interval scaling using getDynamicSpawnInterval
     this.wavesConfig = Array.from({ length: this.waveCount }, (_, i) => ({
       waveNumber: i + 1,
       mobCount: 5 + i * 2, // Example scaling
-      spawnInterval: Math.max(500, this.spawnInterval - i * 100),
+      spawnInterval: this.getDynamicSpawnInterval(i),
       difficulty: i + 1,
     }));
   }
@@ -143,3 +153,5 @@ export class MobSpawner {
     this.activeMobs.delete(id);
   }
 }
+
+// Contains AI-generated edits.

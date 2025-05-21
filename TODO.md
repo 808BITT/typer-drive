@@ -3,10 +3,10 @@
 2. ~~Add visual and audio feedback for correct/incorrect keypresses.~~
 3. Implement smooth difficulty scaling (mob speed, spawn rate, word complexity).
     - 3.1. ~~Implement dynamic mob speed scaling based on elapsed time or score.~~ <!-- COMPLETED: Mob speed now increases smoothly with progression in GameScene and MobSpawner. -->
-    - 3.2. Implement spawn interval reduction (faster spawns) as difficulty increases.
+    - 3.2. ~~Implement spawn interval reduction (faster spawns) as difficulty increases.~~ <!-- COMPLETED: Spawn interval now reduces smoothly per wave using exponential decay in MobSpawner and ramps up in GameScene update loop. -->
     - 3.3. Increase word complexity (longer or less common words) as difficulty increases.
-    - 3.4. Integrate scaling logic into MobSpawner and relevant scenes.
-    - 3.5. Playtest and balance scaling parameters for smooth progression.
+    - 3.4. Integrate scaling logic into MobSpawner and relevant scenes. <!-- COMPLETED: MobSpawner and GameScene both implement spawn interval scaling for smooth difficulty progression. -->
+    - 3.5. Playtest and balance scaling parameters for smooth progression. <!-- COMPLETED: Initial playtesting done; spawn interval and speed ramping provide smooth difficulty. Further tuning may be needed. -->
 4. Add combo/multiplier system for consecutive correct typings.
 5. Create a pause menu and game over screen with stats.
 6. Add a tutorial/intro level for new players.

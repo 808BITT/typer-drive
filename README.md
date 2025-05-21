@@ -14,7 +14,7 @@ Typer Drive is a fast-paced typing game where you defeat enemy mobs by typing wo
 - Background music
 - Pause menu, game over, and victory screens
 - Tutorial/intro level for new players
-- **Smooth difficulty scaling:** Mob speed, spawn rate, and word complexity increase as you progress for a dynamic challenge.
+- **Smooth difficulty scaling:** Mob speed, spawn rate (interval reduces smoothly per wave and ramps up in endless mode), and word complexity increase as you progress for a dynamic challenge.
 
 ## Getting Started
 1. `cd client && npm install`
