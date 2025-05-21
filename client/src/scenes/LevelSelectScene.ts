@@ -69,11 +69,19 @@ export class LevelSelectScene extends Phaser.Scene {
         (world.levels as any[]).forEach((level: any, idx: number) => {
             const y = 200 + idx * buttonSpacing;
             const progression = getProgression();
-            const unlocked = idx === 0 || progression[level.id];
+            // First level always unlocked, others unlocked if previous is completed
+            let unlocked = false;
+            if (idx === 0) {
+                unlocked = true;
+            } else {
+                const prevLevel = world.levels[idx - 1];
+                unlocked = progression[prevLevel.id] === true;
+            }
             const button = this.add.rectangle(width / 2, y, buttonWidth, buttonHeight, unlocked ? buttonColor : 0x555555, 1)
                 .setInteractive({ useHandCursor: unlocked })
                 .setOrigin(0.5);
-            this.add.text(width / 2, y, level.name + (unlocked ? '' : ' (Locked)'), {
+            // Add lock emoji for locked levels instead of missing image asset
+            this.add.text(width / 2, y, (unlocked ? '' : '🔒 ') + level.name + (unlocked ? '' : ' (Locked)'), {
                 fontFamily: 'Arial',
                 fontSize: '22px',
                 color: unlocked ? fontColor : '#888',
@@ -85,6 +93,9 @@ export class LevelSelectScene extends Phaser.Scene {
                 button.on('pointerdown', () => {
                     this.scene.start('GameScene', { levelConfig: level });
                 });
+            } else {
+                // Add a slight alpha to locked buttons
+                button.setAlpha(0.6);
             }
         });
 

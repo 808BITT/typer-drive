@@ -338,9 +338,12 @@ export class GameScene extends Phaser.Scene {
         const world = (window as any).currentWorldId || 'world-1-index';
         const worldLevels = (window as any).currentWorldLevels || [];
         const idx = worldLevels.findIndex((l: any) => l.id === this.levelConfig.id);
-        if (idx >= 0 && idx + 1 < worldLevels.length) {
-            progression[worldLevels[idx + 1].id] = true;
-            setProgression(progression);
+        // Mark this level as completed
+        progression[this.levelConfig.id] = true;
+        setProgression(progression);
+        // If this is the last level in the world, mark world as completed in localStorage
+        if (idx === worldLevels.length - 1) {
+            localStorage.setItem(`${world}-completed`, 'true');
         }
         // Show level complete UI
         const { width, height } = this.scale;

@@ -7,6 +7,21 @@ export interface LevelConfig {
   name: string;
   letters: string[];
   boss: boolean;
+  // New: Optional custom rules for the level
+  customRules?: Record<string, any>;
+  // New: Win condition for the level (e.g., score, survive time, defeat boss)
+  winCondition?: {
+    type: 'score' | 'time' | 'defeat-boss' | 'custom';
+    value?: number | string;
+    description?: string;
+  };
+  // New: Boss configuration if this is a boss fight
+  bossConfig?: {
+    name: string;
+    health: number;
+    attackPattern: string;
+    [key: string]: any;
+  };
 }
 
 /**

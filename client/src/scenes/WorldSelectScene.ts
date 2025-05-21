@@ -44,15 +44,9 @@ export class WorldSelectScene extends Phaser.Scene {
             let unlocked = false;
             if (idx === 0) {
                 unlocked = true; // World 1 always unlocked
-            } else if (idx === 1) {
-                // World 2 unlocked if World 1 completed
-                unlocked = localStorage.getItem('world-1-index-completed') === 'true';
-            } else if (idx === 2) {
-                // World 3 unlocked if World 2 completed
-                unlocked = localStorage.getItem('world-2-middle-completed') === 'true';
-            } else if (idx === 3) {
-                // World 4 unlocked if World 3 completed
-                unlocked = localStorage.getItem('world-3-ring-completed') === 'true';
+            } else {
+                const prevWorld = worlds[idx - 1];
+                unlocked = localStorage.getItem(`${prevWorld.id}-completed`) === 'true';
             }
             // Add button
             const button = this.add.rectangle(width / 2, y, buttonWidth, buttonHeight, unlocked ? buttonColor : 0x444444, 1)

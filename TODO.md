@@ -1,13 +1,12 @@
-### Mobs & Extensibility
-1. Refactor mob logic so new mob types can be added via configuration or subclassing. <!-- COMPLETED: MobSpawner now supports both letter and word mobs, configurable by percentage. -->
-2. Document the process for adding new mobs (base class, config, registration). <!-- COMPLETED: See docs/adding-mobs.md for full guide. -->
-3. Implement a mob registry/factory for dynamic mob instantiation. <!-- COMPLETED: MobRegistry enables dynamic registration and instantiation of mob types. -->
-4. Add unique behaviors and visuals for each mob type (e.g., armored, shielded, boss).
-5. Support for word-based and letter-based mobs. <!-- COMPLETED: Word-based mobs and percentage-based spawning implemented. -->
-
 ### Level & World Design
-1. Expand level definitions to support custom rules, win conditions, and boss fights.
-2. Add world/level progression with unlocks and save/load progression.
+- [x] Expand level definitions to support custom rules, win conditions, and boss fights.
+- [x] Add world/level progression with unlocks and save/load progression.
+    - Implement level unlock logic in LevelSelectScene and GameScene
+    - Implement world unlock logic in WorldSelectScene
+    - Use localStorage to persist progression (levels and worlds)
+    - Add save/load progression utility functions
+    - Update UI to show locked/unlocked states for levels and worlds
+    - Test progression and unlock flow
 3. Create a level editor or config-driven level creation.
 
 ### Core Gameplay & Polish
@@ -33,6 +32,11 @@
 3. Support for custom word lists or user-generated content.
 
 - [x] Add visual and audio feedback for correct/incorrect keypresses.
+- [ ] Add visual feedback for progression (locked/unlocked levels and worlds)
+    - [x] Show locked/unlocked states for levels in LevelSelectScene (e.g., grayed out, lock icon, or disabled button)
+    - [ ] Show locked/unlocked states for worlds in WorldSelectScene
+    - [ ] Add notification or animation in GameScene/HUD when a new level/world is unlocked
+    - [ ] Test progression feedback and polish UI
 
 ### Modularization for Future Expansion
 1. Refactor mob system for modularity (base class, types, spawner, input handler)
