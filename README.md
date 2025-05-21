@@ -20,6 +20,7 @@ Typer Drive is a fast-paced typing game where you defeat enemy mobs by typing wo
 
 ## Recent Improvements
 - Input handling in TypingInputHandler and Mob.onTyped has been profiled and optimized for minimal latency and allocations.
+- **Unit tests for TypingInputHandler and MobSpawner have been added to ensure robust input handling and mob spawning.**
 - MobSpawner's update and mob lifecycle management is being reviewed for efficiency and memory safety.
 - State transitions (mob destruction, phase changes) are being made atomic and safe.
 - Code comments and documentation are being updated for maintainability.
