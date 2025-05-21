@@ -56,6 +56,7 @@ export class GameScene extends Phaser.Scene {
     private health: number = 100;
     private combo: number = 0;
     private maxCombo: number = 0;
+    private multiplier: number = 1;
     private isGameOver: boolean = false;
     private player!: Phaser.GameObjects.Rectangle;
     private spawnTimer: number = 0;
@@ -63,6 +64,9 @@ export class GameScene extends Phaser.Scene {
     // Utility to get all worlds and levels
     private currentWorld: any;
     private currentLevel: any;
+
+    // Combo text display
+    private comboText?: Phaser.GameObjects.Text;
 
     constructor() {
         super({ key: 'GameScene' });
@@ -123,6 +127,17 @@ export class GameScene extends Phaser.Scene {
         // Show mobs remaining in HUD
         this.hud.goalText?.setText(`Mobs Left: ${this.mobsRemaining}`);
 
+        // Combo display
+        this.comboText = this.add.text(width - 40, 30, '', {
+            fontFamily: 'Arial Black',
+            fontSize: '28px',
+            color: '#ffcc00',
+            align: 'right',
+            stroke: '#000',
+            strokeThickness: 4
+        }).setOrigin(1, 0.5);
+        this.updateComboText();
+
         // Determine current world and level from levelConfig
         const found = getCurrentWorldAndLevel(this.levelConfig.id) || {};
         this.currentWorld = (found as any).world;
@@ -140,6 +155,14 @@ export class GameScene extends Phaser.Scene {
         this.totalMobs = Math.round(30 * difficultyScale);
         this.mobsRemaining = this.totalMobs;
         this.hud.goalText?.setText(`Mobs Left: ${this.mobsRemaining}`);
+
+        // Add pause key
+        this.input.keyboard?.on('keydown-ESC', () => {
+            if (!this.isGameOver && !this.scene.isActive('PauseMenuScene')) {
+                this.scene.launch('PauseMenuScene');
+                this.scene.pause();
+            }
+        });
     }
 
     update(time: number, delta: number) {
@@ -273,7 +296,14 @@ export class GameScene extends Phaser.Scene {
         this.destroyMob(mob, false);
         if (this.health <= 0) {
             this.isGameOver = true;
-            this.hud.showGameOver(this.score, this.maxCombo);
+            // Show game over screen with stats
+            this.scene.launch('GameOverScene', {
+                score: this.score,
+                maxCombo: this.maxCombo,
+                accuracy: this.accuracy,
+                wpm: this.wpm
+            });
+            this.scene.stop();
         }
     }
 
@@ -354,6 +384,9 @@ export class GameScene extends Phaser.Scene {
         this.add.text(width / 2, height / 2 + 10, `Score: ${this.score}`, {
             fontFamily: 'Arial', fontSize: '28px', color: '#ffff00', align: 'center', stroke: '#000', strokeThickness: 3
         }).setOrigin(0.5);
+        this.add.text(width / 2, height / 2 + 50, `Max Combo: ${this.maxCombo}`, {
+            fontFamily: 'Arial', fontSize: '22px', color: '#ffcc00', align: 'center', stroke: '#000', strokeThickness: 2
+        }).setOrigin(0.5);
         // Continue button
         const continueButton = this.add.rectangle(width / 2, height / 2 + 70, 180, 48, 0x44aaff, 1).setOrigin(0.5).setInteractive({ useHandCursor: true });
         this.add.text(width / 2, height / 2 + 70, 'Next Level', {
@@ -368,28 +401,48 @@ export class GameScene extends Phaser.Scene {
         });
     }
 
-    // Call this when a key is typed
+    /**
+     * Call this when a key is typed (from TypingInputHandler or similar)
+     * @param letter The letter typed
+     * @param correct Whether the typing was correct
+     */
     private handleTyping(letter: string, correct: boolean) {
-        // Show instant feedback on HUD
+        if (correct) {
+            this.combo++;
+            if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+            this.multiplier = 1 + Math.floor(this.combo / 10); // +1x every 10 streak
+            this.score += 10 * this.multiplier;
+        } else {
+            this.combo = 0;
+            this.multiplier = 1;
+        }
+        this.updateComboText();
+        if (this.hud && typeof this.hud.updateCombo === 'function') {
+            this.hud.updateCombo(this.combo, this.multiplier);
+        }
         if (this.hud && typeof this.hud.showFeedback === 'function') {
             this.hud.showFeedback(correct);
         }
-        // Animate the typed letter for instant feedback
-        if (this.letterText) {
-            this.letterText.setColor(correct ? '#00ff00' : '#ff3333');
-            this.tweens.add({
-                targets: this.letterText,
-                alpha: 0.7,
-                yoyo: true,
-                duration: 120,
-                onComplete: () => {
-                    this.letterText?.setColor('#fff');
-                    this.letterText?.setAlpha(1);
-                }
-            });
-        }
         this.lastTypedCorrect = correct;
         this.lastTypedTime = this.time.now;
+    }
+
+    private updateComboText() {
+        if (this.comboText) {
+            if (this.combo >= 2) {
+                this.comboText.setText(`Combo: ${this.combo}  x${this.multiplier}`);
+                this.comboText.setAlpha(1);
+                this.tweens.add({
+                    targets: this.comboText,
+                    scale: 1.2,
+                    yoyo: true,
+                    duration: 120,
+                    onComplete: () => this.comboText?.setScale(1)
+                });
+            } else {
+                this.comboText.setText('');
+            }
+        }
     }
 }
 
@@ -404,3 +457,5 @@ function getCurrentWorldAndLevel(levelId: string) {
   }
   return null;
 }
+
+// Contains AI-generated edits.

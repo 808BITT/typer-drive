@@ -1,8 +1,13 @@
 ### Core Gameplay & Polish
-1. [x] Add or improve tests for typing accuracy and responsiveness. (Comprehensive unit tests for TypingInputHandler ensure robust accuracy and responsiveness.)
-2. Add combo/multiplier system for consecutive correct typings.
-3. Create a pause menu and game over screen with stats.
-4. Add a tutorial/intro level for new players.
+1. [x] Add combo/multiplier system for consecutive correct typings.
+    - Track current combo and max combo in GameScene.
+    - Increment combo on each correct typing, reset on miss.
+    - Apply score multiplier based on combo streak (e.g., every 10 combo = +1x multiplier).
+    - Display current combo and multiplier in HUD.
+    - Emit and handle events for combo updates between TypingInputHandler, GameScene, and HUD/HUDScene.
+    - Test combo resets and multiplier scoring.
+2. [x] Add a pause menu and game over screen with stats.
+3. Add a tutorial/intro level for new players.
 
 ### UI/UX Improvements
 1. Polish HUD: show score, combo, health, and level progress.

@@ -5,13 +5,15 @@ import { LevelSceneIndex1 } from './scenes/LevelSceneIndex1';
 import { LevelSelectScene } from './scenes/LevelSelectScene';
 import { MainMenuScene } from './scenes/MainMenuScene';
 import { WorldSelectScene } from './scenes/WorldSelectScene';
+import PauseMenuScene from './scenes/PauseMenuScene';
+import GameOverScene from './scenes/GameOverScene';
 
 const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
     width: '100%',
     height: '100%',
     parent: 'game-container',
-    scene: [BootScene, MainMenuScene, WorldSelectScene, LevelSelectScene, GameScene, LevelSceneIndex1],
+    scene: [BootScene, MainMenuScene, WorldSelectScene, LevelSelectScene, GameScene, LevelSceneIndex1, PauseMenuScene, GameOverScene],
     scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
