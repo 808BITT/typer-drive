@@ -7,6 +7,7 @@ export class TypingInputHandler {
   private keyPressListeners: Phaser.Input.Keyboard.KeyboardPlugin;
   private missCallback: () => void;
   private typedCallback: (letter: string, success: boolean) => void;
+  private keydownHandler: ((event: KeyboardEvent) => void) | null = null;
 
   constructor(scene: Phaser.Scene, config: {
     mobGetter: () => Map<string, IMob>;
@@ -22,43 +23,57 @@ export class TypingInputHandler {
     this.setupKeyboardListeners();
   }
 
+  /**
+   * Set up a single keydown listener for all alphanumeric keys and common symbols.
+   * Ensures no duplicate listeners are attached.
+   */
   private setupKeyboardListeners(): void {
-    // Set up a listener for all alphanumeric keys and common symbols
-    this.keyPressListeners.on('keydown', (event: KeyboardEvent) => {
-      // Check if the key is a letter, number, or common symbol
-      if ((event.key.length === 1 && /[a-zA-Z0-9\s\-=\[\];',\.\/!@#$%^&*()_+{}:"<>?]/.test(event.key))) {
-        this.handleKeyPress(event.key.toLowerCase());
+    if (this.keydownHandler) {
+      this.keyPressListeners.off('keydown', this.keydownHandler);
+    }
+    this.keydownHandler = (event: KeyboardEvent) => {
+      // Normalize key: only process single visible characters
+      if (event.key.length === 1 && /[\w\s\-\=\[\];',\.\/!@#$%^&*()_+{}:"<>?]/.test(event.key)) {
+        // Use locale-insensitive lowercasing for consistency
+        this.handleKeyPress(event.key.toLocaleLowerCase('en-US'));
       }
-    });
+    };
+    this.keyPressListeners.on('keydown', this.keydownHandler);
   }
 
+  /**
+   * Handles a key press by finding the closest active mob that accepts the input.
+   * Optimized for minimal latency and correctness.
+   */
   private handleKeyPress(key: string): void {
     const mobs = this.mobGetter();
     if (!mobs || mobs.size === 0) return;
-    
-    // Sort mobs by proximity to player (left side of screen)
-    const sortedMobs = Array.from(mobs.values())
-      .filter(mob => mob.active)
-      .sort((a, b) => a.mobPosition.x - b.mobPosition.x);
-    
+
+    let sortedMobs: IMob[];
+    if (mobs.size === 1) {
+      // Avoid allocation/sorting if only one mob
+      sortedMobs = Array.from(mobs.values());
+    } else {
+      sortedMobs = Array.from(mobs.values())
+        .filter(mob => mob.active)
+        .sort((a, b) => a.mobPosition.x - b.mobPosition.x);
+    }
     if (sortedMobs.length === 0) return;
-    
+
     let success = false;
-    
-    // Try to find a mob that accepts this keypress
     for (const mob of sortedMobs) {
       if (mob.onTyped(key)) {
         success = true;
         break;
       }
     }
-    
-    // Call the appropriate callbacks
+
+    // Callbacks and effects
     if (!success) {
       this.missCallback();
-      
-      // Create a miss visual effect
-      const missEffect = this.scene.add.particles(100, sortedMobs[0].mobPosition.y, 'miss-particle', {
+      // Miss effect (minimal allocation)
+      const missMob = sortedMobs[0];
+      const missEffect = this.scene.add.particles(missMob.mobPosition.x, missMob.mobPosition.y, 'miss-particle', {
         lifespan: 300,
         speed: { min: 50, max: 80 },
         scale: { start: 0.5, end: 0 },
@@ -66,20 +81,23 @@ export class TypingInputHandler {
         quantity: 5,
         emitting: false
       });
-      
       missEffect.explode();
-      
       this.scene.time.delayedCall(300, () => {
         missEffect.destroy();
       });
     }
-    
-    // Call the typed callback
     this.typedCallback(key, success);
   }
 
+  /**
+   * Removes the keydown event listener to prevent memory leaks.
+   */
   cleanup(): void {
-    // Remove event listeners
-    this.keyPressListeners.off('keydown');
+    if (this.keydownHandler) {
+      this.keyPressListeners.off('keydown', this.keydownHandler);
+      this.keydownHandler = null;
+    }
   }
 }
+
+// Contains AI-generated edits.

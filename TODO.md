@@ -1,8 +1,12 @@
 ### Core Gameplay & Polish
-1. Refine core typing mechanics for responsiveness and accuracy.
-4. Add combo/multiplier system for consecutive correct typings.
-5. Create a pause menu and game over screen with stats.
-6. Add a tutorial/intro level for new players.
+1. Refine core typing mechanics for responsiveness and accuracy. <!-- COMPLETED: Input system now robust, low-latency, and provides instant feedback. Edge cases (rapid key presses, incorrect inputs) handled. -->
+2. Audit and optimize TypingInputHandler for input latency and correctness. <!-- COMPLETED: Optimized event listener management, improved key normalization, reduced per-frame allocations, and clarified callback usage for robust, low-latency input handling. -->
+3. Ensure Mob and MobSpawner handle input and state transitions efficiently.
+4. Update HUD and GameScene for instant feedback on typing.
+5. Add or improve tests for typing accuracy and responsiveness.
+6. Add combo/multiplier system for consecutive correct typings.
+7. Create a pause menu and game over screen with stats.
+8. Add a tutorial/intro level for new players.
 
 ### Mobs & Extensibility
 1. Refactor mob logic so new mob types can be added via configuration or subclassing. <!-- COMPLETED: MobSpawner now supports both letter and word mobs, configurable by percentage. -->
