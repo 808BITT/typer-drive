@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BaseMob, MobEffects } from '../mobs/Mob';
+import MobRegistry from './MobRegistry';
 
 export class NormalLetterMob extends BaseMob {
   constructor(config: any) {
@@ -611,3 +612,11 @@ export class WordMob extends BaseMob {
     return false;
   }
 }
+
+// Register mob types after all class declarations
+MobRegistry.registerMob('normal-letter', NormalLetterMob);
+MobRegistry.registerMob('tank-word', TankWordMob);
+MobRegistry.registerMob('armored-letter', ArmoredLetterMob);
+MobRegistry.registerMob('shielded-word', ShieldedWordMob);
+MobRegistry.registerMob('regenerator', RegeneratorMob);
+MobRegistry.registerMob('split-word', SplitWordMob);

@@ -1,13 +1,7 @@
-### Code Unification & Cleanup
-1. Ensure all code is well-commented and follows project conventions. <!-- COMPLETED: Updated code comments and enforced style guidelines. -->
-2. Write unit/integration tests for core systems (mob spawning, input handling). <!-- COMPLETED: Added unit tests for TypingInputHandler and MobSpawner. -->
-3. Modularize code for easy future expansion (mobs, levels, UI).
-4. Keep project layout and documentation up to date.
-
 ### Mobs & Extensibility
 1. Refactor mob logic so new mob types can be added via configuration or subclassing. <!-- COMPLETED: MobSpawner now supports both letter and word mobs, configurable by percentage. -->
-2. Document the process for adding new mobs (base class, config, registration).
-3. Implement a mob registry/factory for dynamic mob instantiation.
+2. Document the process for adding new mobs (base class, config, registration). <!-- COMPLETED: See docs/adding-mobs.md for full guide. -->
+3. Implement a mob registry/factory for dynamic mob instantiation. <!-- COMPLETED: MobRegistry enables dynamic registration and instantiation of mob types. -->
 4. Add unique behaviors and visuals for each mob type (e.g., armored, shielded, boss).
 5. Support for word-based and letter-based mobs. <!-- COMPLETED: Word-based mobs and percentage-based spawning implemented. -->
 
@@ -39,5 +33,20 @@
 3. Support for custom word lists or user-generated content.
 
 - [x] Add visual and audio feedback for correct/incorrect keypresses.
+
+### Modularization for Future Expansion
+1. Refactor mob system for modularity (base class, types, spawner, input handler)
+2. Refactor level system for modularity (level configs, world groupings)
+3. Refactor UI/HUD for modularity (HUD, HUDScene, UI components)
+4. Ensure scalable imports/usage in main.ts and scenes
+5. Update README.md to document modular structure
+6. Mark this modularization task as completed
+
+- Modularization for future expansion (mobs, levels, UI) is complete. The codebase now uses a modular structure:
+  - All mob types inherit from a base class and are registered in a central module for easy addition.
+  - Level configs are separated and grouped for scalable world/level design.
+  - UI/HUD logic is modularized for extension and reuse.
+  - Main scenes import and use these modules for scalable game logic.
+  - See README.md for details on extending mobs, levels, or UI.
 
 <!-- Contains AI-generated edits -->

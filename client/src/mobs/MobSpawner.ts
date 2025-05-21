@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { MobConfig } from './Mob';
-import { NormalLetterMob, WordMob } from './MobTypes';
+import MobRegistry from './MobRegistry';
 
 export interface WaveConfig {
   waveNumber: number;
@@ -177,12 +177,14 @@ export class MobSpawner {
     }
     const mobConfig = this.spawnQueue.shift();
     if (mobConfig) {
-      let mob;
+      // Determine mob type
+      let mobType: string;
       if (mobConfig.letters.length === 1) {
-        mob = new NormalLetterMob(mobConfig);
+        mobType = 'normal-letter';
       } else {
-        mob = new WordMob(mobConfig);
+        mobType = 'tank-word'; // Default to tank-word for word mobs, can be extended
       }
+      const mob = MobRegistry.createMob(mobType, mobConfig);
       this.activeMobs.set(mobConfig.id, mob);
     }
   }
