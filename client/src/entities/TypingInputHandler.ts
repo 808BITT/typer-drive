@@ -1,3 +1,4 @@
+// UNUSED FILE
 // This file is deprecated. Use mobs/TypingInputHandler.ts instead.
 
 // Contains AI-generated edits.
