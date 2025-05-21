@@ -26,6 +26,7 @@ Typer Drive is a fast-paced typing game where you defeat enemy mobs by typing wo
 - MobSpawner's update and mob lifecycle management is being reviewed for efficiency and memory safety.
 - State transitions (mob destruction, phase changes) are being made atomic and safe.
 - Code comments and documentation are being updated for maintainability.
+- **Scene consolidation in progress:** We are auditing and refactoring `GameplayScene`, `GameScene`, and `MobGameScene` to eliminate redundancy and clarify their roles. See TODO.md for details.
 
 ## Getting Started
 1. `cd client && npm install`
@@ -88,6 +89,17 @@ See `client/src/mobs/MobTypes.ts` for implementation details.
 - Locked levels and worlds are visually indicated in the UI.
 - Progression is saved and loaded automatically using localStorage.
 - You can replay any unlocked level or world at any time.
+
+## Testing
+
+### Typing Accuracy & Responsiveness
+- The `TypingInputHandler` is covered by a comprehensive suite of unit tests (`client/tests/TypingInputHandler.test.ts`).
+- Tests ensure:
+  - Correct mob receives input based on position and activity.
+  - Inactive mobs are ignored for accuracy.
+  - Rapid sequential key presses are handled for responsiveness.
+  - Miss and typed callbacks are triggered appropriately.
+- These tests help guarantee robust, low-latency input handling and accurate gameplay feedback.
 
 ## Contributing
 Pull requests and suggestions are welcome!

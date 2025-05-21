@@ -80,6 +80,39 @@ describe('TypingInputHandler', () => {
     expect(mob2.onTyped).toHaveBeenCalled();
     expect(mob1.onTyped).not.toHaveBeenCalled(); // mob2 is closer, returns true
   });
+
+  it('should handle rapid sequential key presses (responsiveness)', () => {
+    const mob = { onTyped: vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(false), active: true, mobPosition: { x: 10, y: 10 } };
+    mobs.set('mob1', mob);
+    handler = new TypingInputHandler(scene as any, {
+      mobGetter: () => mobs,
+      missCallback,
+      typedCallback,
+    });
+    handler['handleKeyPress']('a'); // Should succeed
+    handler['handleKeyPress']('b'); // Should fail
+    expect(mob.onTyped).toHaveBeenCalledWith('a');
+    expect(mob.onTyped).toHaveBeenCalledWith('b');
+    expect(typedCallback).toHaveBeenCalledWith('a', true);
+    expect(typedCallback).toHaveBeenCalledWith('b', false);
+    expect(missCallback).toHaveBeenCalled();
+  });
+
+  it('should ignore inactive mobs for accuracy', () => {
+    const mob1 = { onTyped: vi.fn(), active: false, mobPosition: { x: 10, y: 10 } };
+    const mob2 = { onTyped: vi.fn().mockReturnValue(true), active: true, mobPosition: { x: 20, y: 10 } };
+    mobs.set('mob1', mob1);
+    mobs.set('mob2', mob2);
+    handler = new TypingInputHandler(scene as any, {
+      mobGetter: () => mobs,
+      missCallback,
+      typedCallback,
+    });
+    handler['handleKeyPress']('f');
+    expect(mob1.onTyped).not.toHaveBeenCalled();
+    expect(mob2.onTyped).toHaveBeenCalledWith('f');
+    expect(typedCallback).toHaveBeenCalledWith('f', true);
+  });
 });
 
 // Contains AI-generated edits.
