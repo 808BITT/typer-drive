@@ -589,3 +589,25 @@ export class BossMob extends BaseMob {
     this.add(healthBar);
   }
 }
+
+export class WordMob extends BaseMob {
+  constructor(config: any) {
+    super(config);
+  }
+
+  onTyped(letter: any) {
+    if (this.letters[this.currentLetterIndex] === letter) {
+      MobEffects.createHitEffect(this.scene, this.x, this.y);
+      this.currentLetterIndex++;
+      if (this.currentLetterIndex >= this.letters.length) {
+        MobEffects.createDestroyEffect(this.scene, this.x, this.y);
+        this.scene.events.emit('score-updated', 50); // More points for word mobs
+        this.destroy();
+        return true;
+      }
+      return true;
+    }
+    // Wrong key was typed
+    return false;
+  }
+}

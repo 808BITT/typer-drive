@@ -27,6 +27,9 @@ export default class GameplayScene extends Phaser.Scene {
     this.load.image('ship', 'assets/images/player-ship.png');
     this.load.image('particle', 'assets/images/particle.png');
     this.load.image('background', 'assets/images/space-bg.png');
+    // Preload audio for feedback
+    this.load.audio('hit', 'assets/audio/hit.mp3');
+    this.load.audio('miss', 'assets/audio/miss.mp3');
   }
   
   create(): void {
@@ -99,21 +102,26 @@ export default class GameplayScene extends Phaser.Scene {
   }
   
   private handleTyping(key: string): void {
-    // Get all active mobs
-    const mobs = this.mobSpawner.getActiveMobs();
+    // Get all active mobs as array
+    const mobsMap = this.mobSpawner.getActiveMobs();
+    const mobs = Array.isArray(mobsMap) ? mobsMap : Array.from(mobsMap.values());
     
     // Sort mobs by proximity to player (left edge)
-    mobs.sort((a, b) => a.x - b.x);
+    mobs.sort((a, b) => (a && a.x ? a.x : 0) - (b && b.x ? b.x : 0));
     
     // Try to find a mob with the matching character
     let matched = false;
     
     for (const mob of mobs) {
-      if (mob.onTyped(key)) {
+      if (mob && typeof mob.onTyped === 'function' && mob.onTyped(key)) {
         matched = true;
         this.charactersTyped++;
         this.updateWPM();
         this.addScore(10);
+        // Visual feedback for correct keypress
+        this.showHitEffect();
+        // Audio feedback for correct keypress
+        this.sound.play('hit');
         break;
       }
     }
@@ -121,6 +129,8 @@ export default class GameplayScene extends Phaser.Scene {
     // If no match, play error effect
     if (!matched) {
       this.showMissEffect();
+      // Audio feedback for incorrect keypress
+      this.sound.play('miss');
     }
   }
   
@@ -146,6 +156,22 @@ export default class GameplayScene extends Phaser.Scene {
       targets: flash,
       alpha: 0,
       duration: 300,
+      onComplete: () => {
+        flash.destroy();
+      }
+    });
+  }
+  
+  private showHitEffect(): void {
+    // Visual feedback for correct typing
+    const x = this.playerShip.x + 50;
+    const y = this.playerShip.y;
+    // Green flash to indicate a hit
+    const flash = this.add.rectangle(x, y, 50, 50, 0x00ff00, 0.6);
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      duration: 200,
       onComplete: () => {
         flash.destroy();
       }

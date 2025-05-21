@@ -2,9 +2,12 @@
 applyTo: "**"
 ---
 
-# Typer Drive Project Layout
-
+# Project Layout Documentation
 This document outlines the folder structure and organization of the Typer Drive project.
+Update this file as the project evolves to reflect any changes in the directory structure or organization.
+It serves as a guide for developers to understand where to find specific components and how the project is structured.
+It is also used to generate the project layout documentation in the GitHub repository.
+It is important to keep this document up-to-date to ensure that all team members can easily navigate the project and understand its organization.
 
 ## Root Directory Structure
 
@@ -22,18 +25,9 @@ This document outlines the folder structure and organization of the Typer Drive 
     - `audio/` - Sound effects and music files
     - `images/` - Sprites, backgrounds, and UI elements
   - `entities/` - Game entity classes (Mob, Player, etc.)
-    - `Mob.ts` - Base class for enemy mobs
-    - `MobSpawner.ts` - System for managing mob waves
   - `scenes/` - Phaser scene classes
-    - `BootScene.ts` - Initial loading scene
-    - `MainMenuScene.ts` - Main menu 
-    - `GameplayScene.ts` - Core gameplay scene
-    - `HUDScene.ts` - Overlay for score, health, etc.
   - `levels/` - Level definitions and configurations
   - `utils/` - Utility functions and helper classes
-    - `ColorUtils.ts` - Utilities for color manipulation and contrast
-    - `AssetLoader.ts` - Centralized asset loading
-    - `AudioManager.ts` - Sound management
   - `config/` - Game configuration constants
   - `types/` - TypeScript type definitions
   - `main.ts` - Application entry point
@@ -45,11 +39,6 @@ This document outlines the folder structure and organization of the Typer Drive 
 
 ## GitHub Directory (`.github/`)
 
-- `workflows/` - CI/CD GitHub Actions definitions
-  - `ci.yml` - Continuous integration workflow
-- `ISSUE_TEMPLATE/` - Templates for issues and bug reports
-  - `bug_report.md` - Standard bug reporting template
-  - `feature_request.md` - Feature request template
 - `instructions/` - AI assistance and project guideline files
   - `vision.instructions.md` - Overall project vision
   - `ai-comments.instructions.md` - AI-generated code comment guidelines
