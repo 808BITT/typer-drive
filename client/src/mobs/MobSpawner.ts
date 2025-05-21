@@ -25,6 +25,25 @@ export class MobSpawner {
   private onWaveComplete: (waveNumber: number) => void;
   private mobTypePercentages: { letter: number; word: number } = { letter: 100, word: 0 };
 
+  // Word pools by difficulty
+  private wordPools = {
+    easy: [
+      'CAT', 'DOG', 'SUN', 'CAR', 'MAP', 'RUN', 'BOX', 'FAN', 'HAT', 'PEN',
+      'RED', 'TOP', 'BAT', 'CUP', 'BED', 'JAM', 'KEY', 'LOG', 'MUG', 'NUT'
+    ],
+    medium: [
+      'SPACE', 'TYPER', 'DRIVE', 'PHASER', 'LEVEL', 'MOB', 'BOSS', 'SPEED', 'POWER',
+      'GHOST', 'PLANT', 'BRAVE', 'SHARP', 'CLOUD', 'TRAIN', 'SWORD', 'SHINE', 'BRICK', 'CRANE', 'PLANE'
+    ],
+    hard: [
+      'COMPUTER', 'ELEPHANT', 'DANGEROUS', 'HARMONICA', 'NOTEBOOK', 'PYTHONIC', 'JOURNEY', 'MYSTERY', 'TRIANGLE', 'SYMPHONY',
+      'GALAXY', 'HORIZON', 'MAGNETIC', 'OBSIDIAN', 'QUANTUM', 'RHAPSODY', 'SATELLITE', 'TREASURE', 'VORTEX', 'WHISPER'
+    ],
+    rare: [
+      'XYLOPHONE', 'ZEPHYR', 'QUIZZICAL', 'MNEMONIC', 'PSYCHE', 'RHINOCEROS', 'SUBPOENA', 'TWYNDYLLYNGS', 'UNOBTAINIUM', 'VISCOSITY'
+    ]
+  };
+
   constructor(scene: Phaser.Scene, config: {
     totalWaves: number;
     initialSpawnInterval: number;
@@ -94,10 +113,33 @@ export class MobSpawner {
     });
   }
 
+  private pickWordByDifficulty(difficulty: number): string {
+    if (difficulty < 3) {
+      // Early waves: mostly easy, some medium
+      return Math.random() < 0.8
+        ? this.wordPools.easy[Math.floor(Math.random() * this.wordPools.easy.length)]
+        : this.wordPools.medium[Math.floor(Math.random() * this.wordPools.medium.length)];
+    } else if (difficulty < 6) {
+      // Mid waves: mix of medium and hard
+      return Math.random() < 0.6
+        ? this.wordPools.medium[Math.floor(Math.random() * this.wordPools.medium.length)]
+        : this.wordPools.hard[Math.floor(Math.random() * this.wordPools.hard.length)];
+    } else if (difficulty < 9) {
+      // Late waves: mostly hard, some rare
+      return Math.random() < 0.7
+        ? this.wordPools.hard[Math.floor(Math.random() * this.wordPools.hard.length)]
+        : this.wordPools.rare[Math.floor(Math.random() * this.wordPools.rare.length)];
+    } else {
+      // Endgame: mostly rare
+      return Math.random() < 0.5
+        ? this.wordPools.rare[Math.floor(Math.random() * this.wordPools.rare.length)]
+        : this.wordPools.hard[Math.floor(Math.random() * this.wordPools.hard.length)];
+    }
+  }
+
   private generateMobs(count: number, difficulty: number): MobConfig[] {
     const mobs: MobConfig[] = [];
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const words = ['SPACE', 'TYPER', 'DRIVE', 'PHASER', 'GAME', 'LEVEL', 'MOB', 'BOSS', 'SPEED', 'POWER'];
     for (let i = 0; i < count; i++) {
       const mobType = this.selectMobType();
       if (mobType === 'letter') {
@@ -111,7 +153,7 @@ export class MobSpawner {
           scene: this.scene,
         });
       } else {
-        const word = words[Math.floor(Math.random() * words.length)];
+        const word = this.pickWordByDifficulty(difficulty);
         mobs.push({
           id: `mob_${this.currentWave}_${i}`,
           letters: word.split(''),
