@@ -22,6 +22,9 @@ export class GameScene extends Phaser.Scene {
     private letters!: string[];
     private currentLetterIndex: number = 0;
     private letterText?: Phaser.GameObjects.Text;
+    private lastTypedCorrect: boolean | null = null;
+    private lastTypedTime: number = 0;
+    private hud?: any; // Add HUD reference if not present
     private score: number = 0;
     private scoreText?: Phaser.GameObjects.Text;
     private wpm: number = 0;
@@ -361,6 +364,30 @@ export class GameScene extends Phaser.Scene {
             }
         });
     }
+
+    // Call this when a key is typed
+    private handleTyping(letter: string, correct: boolean) {
+        // Show instant feedback on HUD
+        if (this.hud && typeof this.hud.showFeedback === 'function') {
+            this.hud.showFeedback(correct);
+        }
+        // Animate the typed letter for instant feedback
+        if (this.letterText) {
+            this.letterText.setColor(correct ? '#00ff00' : '#ff3333');
+            this.tweens.add({
+                targets: this.letterText,
+                alpha: 0.7,
+                yoyo: true,
+                duration: 120,
+                onComplete: () => {
+                    this.letterText?.setColor('#fff');
+                    this.letterText?.setAlpha(1);
+                }
+            });
+        }
+        this.lastTypedCorrect = correct;
+        this.lastTypedTime = this.time.now;
+    }
 }
 
 // Utility to get all worlds and levels
@@ -368,9 +395,9 @@ const worlds = [World1Index, World2Middle, World3Ring, World4Pinky];
 function getCurrentWorldAndLevel(levelId: string) {
   for (const world of worlds) {
     const level = world.levels.find(l => l.id === levelId);
-    if (level) return { world, level };
+    if (level) {
+      return { world, level };
+    }
   }
   return null;
 }
-
-// Contains AI-generated edits.

@@ -19,20 +19,43 @@ export class HUD {
 
     // UI Elements
     wpmText?: Phaser.GameObjects.Text;
-    accuracyText?: Phaser.GameObjects.Text;
-    goalText?: Phaser.GameObjects.Text;
+    comboText?: Phaser.GameObjects.Text;
+    healthText?: Phaser.GameObjects.Text;
+    // Add missing HUD properties for error-free build
     hudBg?: Phaser.GameObjects.Rectangle;
+    goalText?: Phaser.GameObjects.Text;
     wpmMeter?: Phaser.GameObjects.Graphics;
     wpmFill?: Phaser.GameObjects.Graphics;
+    accuracyText?: Phaser.GameObjects.Text;
     accuracyMeter?: Phaser.GameObjects.Graphics;
     accuracyFill?: Phaser.GameObjects.Graphics;
     goalBar?: Phaser.GameObjects.Graphics;
     goalFill?: Phaser.GameObjects.Graphics;
-    goalBarWidth: number = 300;
+    goalBarWidth?: number;
+    // Feedback indicator for instant feedback
+    private feedbackIndicator?: Phaser.GameObjects.Text;
 
-    // Combo and health display
-    private comboText?: Phaser.GameObjects.Text;
-    private healthText?: Phaser.GameObjects.Text;
+    // Show instant feedback (correct/incorrect)
+    public showFeedback(correct: boolean) {
+        if (!this.feedbackIndicator) {
+            this.feedbackIndicator = this.scene.add.text(this.width / 2, 60, '', {
+                fontSize: '32px',
+                color: '#fff',
+                fontStyle: 'bold',
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                padding: { left: 10, right: 10, top: 5, bottom: 5 },
+            }).setOrigin(0.5);
+        }
+        this.feedbackIndicator.setText(correct ? '✔' : '✖');
+        this.feedbackIndicator.setColor(correct ? '#00ff00' : '#ff3333');
+        this.feedbackIndicator.setAlpha(1);
+        this.scene.tweens.add({
+            targets: this.feedbackIndicator,
+            alpha: 0,
+            duration: 400,
+            ease: 'Cubic.easeOut',
+        });
+    }
 
     // Animation properties
     private progressTween?: Phaser.Tweens.Tween;

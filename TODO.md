@@ -1,11 +1,9 @@
 ### Core Gameplay & Polish
-3. Ensure Mob and MobSpawner handle input and state transitions efficiently. <!-- COMPLETED: See breakdown below. -->
-   - [x] Profile and optimize TypingInputHandler and Mob.onTyped for input latency and minimal allocations.
-   - [x] Ensure MobSpawner's update and mob lifecycle management is efficient (no memory leaks, timely removal).
-   - [x] Minimize unnecessary allocations or sorts in input handling (e.g., avoid sorting mobs if only one is active).
-   - [x] Ensure state transitions (mob destruction, phase changes) are atomic and safe.
-   - [x] Document improvements and update code comments for maintainability.
-4. Update HUD and GameScene for instant feedback on typing.
+4. Update HUD and GameScene for instant feedback on typing. <!-- COMPLETED: See below for subtasks. -->
+    - [x] Add HUD methods for instant feedback (flash score/combo/health, show correct/incorrect indicator).
+    - [x] Update GameScene to call HUD feedback methods on keypress (correct/incorrect).
+    - [x] Animate or color the typed letter/mob for instant feedback.
+    - [x] Test and polish feedback effects for clarity and responsiveness.
 5. Add or improve tests for typing accuracy and responsiveness.
 6. Add combo/multiplier system for consecutive correct typings.
 7. Create a pause menu and game over screen with stats.
