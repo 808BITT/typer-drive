@@ -187,6 +187,20 @@ export class MobSpawner {
     }
   }
 
+  /**
+   * Updates all active mobs and removes any that are no longer active.
+   * Should be called every frame from the game scene.
+   */
+  update(delta: number): void {
+    this.activeMobs.forEach((mob, id) => {
+      if (mob.active) {
+        mob.update(delta);
+      } else {
+        this.activeMobs.delete(id);
+      }
+    });
+  }
+
   getActiveMobs(): Map<string, any> {
     return this.activeMobs;
   }

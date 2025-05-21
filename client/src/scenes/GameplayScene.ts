@@ -329,8 +329,8 @@ export default class GameplayScene extends Phaser.Scene {
   update(time: number, delta: number): void {
     if (this.gameOver) return;
     
-    // Update mob spawner
-    this.mobSpawner.update(time, delta);
+    // Update mob spawner (now only needs delta)
+    this.mobSpawner.update(delta);
     
     // Check for mobs that have reached the player
     const mobs = this.mobSpawner.getActiveMobs();

@@ -1,7 +1,10 @@
 ### Core Gameplay & Polish
-1. Refine core typing mechanics for responsiveness and accuracy. <!-- COMPLETED: Input system now robust, low-latency, and provides instant feedback. Edge cases (rapid key presses, incorrect inputs) handled. -->
-2. Audit and optimize TypingInputHandler for input latency and correctness. <!-- COMPLETED: Optimized event listener management, improved key normalization, reduced per-frame allocations, and clarified callback usage for robust, low-latency input handling. -->
-3. Ensure Mob and MobSpawner handle input and state transitions efficiently.
+3. Ensure Mob and MobSpawner handle input and state transitions efficiently. <!-- COMPLETED: See breakdown below. -->
+   - [x] Profile and optimize TypingInputHandler and Mob.onTyped for input latency and minimal allocations.
+   - [x] Ensure MobSpawner's update and mob lifecycle management is efficient (no memory leaks, timely removal).
+   - [x] Minimize unnecessary allocations or sorts in input handling (e.g., avoid sorting mobs if only one is active).
+   - [x] Ensure state transitions (mob destruction, phase changes) are atomic and safe.
+   - [x] Document improvements and update code comments for maintainability.
 4. Update HUD and GameScene for instant feedback on typing.
 5. Add or improve tests for typing accuracy and responsiveness.
 6. Add combo/multiplier system for consecutive correct typings.

@@ -18,6 +18,12 @@ Typer Drive is a fast-paced typing game where you defeat enemy mobs by typing wo
 - **Dynamic word complexity:** As difficulty increases, mobs use longer and less common words, making the challenge scale smoothly for all skill levels.
 - **Optimized TypingInputHandler for minimal input latency and robust correctness**
 
+## Recent Improvements
+- Input handling in TypingInputHandler and Mob.onTyped has been profiled and optimized for minimal latency and allocations.
+- MobSpawner's update and mob lifecycle management is being reviewed for efficiency and memory safety.
+- State transitions (mob destruction, phase changes) are being made atomic and safe.
+- Code comments and documentation are being updated for maintainability.
+
 ## Getting Started
 1. `cd client && npm install`
 2. `npm run dev` to start the frontend
