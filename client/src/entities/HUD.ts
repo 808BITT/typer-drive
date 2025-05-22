@@ -226,7 +226,7 @@ export class HUD {
         this.createHUD();
     }
 
-    private destroyHUD() {
+    public destroyHUD() {
         // Destroy all HUD elements if they exist
         this.hudBg?.destroy();
         this.goalText?.destroy();

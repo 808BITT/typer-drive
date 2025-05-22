@@ -3,6 +3,11 @@
 Typer Drive is a fast-paced typing game where you defeat enemy mobs by typing words and letters quickly and accurately. Built with Phaser 3, TypeScript, and Vite.
 
 ## Features
+- Fast-paced typing action with procedurally generated waves
+- Multiple enemy mob types with unique behaviors
+- Advanced mob spawning: All mob types are now incorporated and spawn randomly with weighted probabilities
+- Power-ups, upgrades, and unlockable cosmetics
+- Dynamic soundtrack and SFX
 - Responsive typing mechanics
 - Multiple mob types and boss fights
 - **Dynamic mob registry/factory:** Easily add new mob types by registering them with the MobRegistry. Mobs are instantiated dynamically at runtime based on configuration or wave logic.
@@ -18,6 +23,7 @@ Typer Drive is a fast-paced typing game where you defeat enemy mobs by typing wo
 - **Smooth difficulty scaling:** Mob speed, spawn rate (interval reduces smoothly per wave and ramps up in endless mode), and word complexity increase as you progress for a dynamic challenge.
 - **Dynamic word complexity:** As difficulty increases, mobs use longer and less common words, making the challenge scale smoothly for all skill levels.
 - **Optimized TypingInputHandler for minimal input latency and robust correctness**
+- **Animated transitions between scenes and levels**
 
 ## Recent Improvements
 - Input handling in TypingInputHandler and Mob.onTyped has been profiled and optimized for minimal latency and allocations.
@@ -69,7 +75,6 @@ Each mob type features distinct gameplay mechanics and visual effects:
 - **ShieldedWordMob:** Protected by a shield that must be broken with a special key (e.g., '#') before typing the word. Shield is visually indicated.
 - **RegeneratorMob:** Regenerates previously removed letters if not destroyed quickly. Visual regeneration effect.
 - **SplitWordMob:** Splits into two mobs halfway through typing. Split effect and new mobs appear.
-- **StealthLetterMob:** Periodically becomes invisible and can only be typed when visible.
 - **SpeedsterMob:** Moves at double speed, higher points.
 - **BossMob:** Multi-phase, with unique visuals and a health bar for each phase. Phase transitions have special effects.
 
@@ -105,3 +110,7 @@ See `client/src/mobs/MobTypes.ts` for implementation details.
 Pull requests and suggestions are welcome!
 
 Contains AI-generated edits.
+
+## SPA Routing Support
+
+The Go server is configured to serve `index.html` for all non-file requests, enabling client-side routing and allowing the game to load correctly on page refresh or direct navigation to any route.

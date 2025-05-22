@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { SceneTransition } from '../utils/SceneTransition';
 
 export class BootScene extends Phaser.Scene {
     constructor() {
@@ -12,7 +13,7 @@ export class BootScene extends Phaser.Scene {
     create() {
         // Setup initial state or transition to MainMenuScene
         console.log('BootScene loaded');
-        this.scene.start('MainMenu');
+        SceneTransition.fadeToScene(this, 'MainMenu');
     }
 
     update(time: number, delta: number) {

@@ -24,7 +24,6 @@ export class GameScene extends Phaser.Scene {
     private letterText?: Phaser.GameObjects.Text;
     private lastTypedCorrect: boolean | null = null;
     private lastTypedTime: number = 0;
-    private hud?: any; // Add HUD reference if not present
     private score: number = 0;
     private scoreText?: Phaser.GameObjects.Text;
     private wpm: number = 0;
@@ -70,6 +69,7 @@ export class GameScene extends Phaser.Scene {
 
     constructor() {
         super({ key: 'GameScene' });
+        // Removed event registration from constructor
     }
 
     /**
@@ -81,6 +81,9 @@ export class GameScene extends Phaser.Scene {
         this.levelConfig = data.levelConfig;
         // TODO: Use userStats to adjust letters/difficulty
         this.letters = this.levelConfig.letters;
+        // Register cleanup handlers here (events is now defined)
+        this.events.on('shutdown', this.cleanup, this);
+        this.events.on('destroy', this.cleanup, this);
     }
 
     preload() {
@@ -418,7 +421,7 @@ export class GameScene extends Phaser.Scene {
         }
         this.updateComboText();
         if (this.hud && typeof this.hud.updateCombo === 'function') {
-            this.hud.updateCombo(this.combo, this.multiplier);
+            this.hud.updateCombo(this.combo);
         }
         if (this.hud && typeof this.hud.showFeedback === 'function') {
             this.hud.showFeedback(correct);
@@ -443,6 +446,30 @@ export class GameScene extends Phaser.Scene {
                 this.comboText.setText('');
             }
         }
+    }
+
+    private cleanup() {
+        // Remove keyboard event listeners
+        this.input.keyboard?.off('keydown', this.handleKey, this);
+        this.input.keyboard?.off('keydown-ESC');
+        // Destroy all mobs
+        if (this.mobs) {
+            this.mobs.clear(true, true);
+        }
+        // Destroy HUD
+        if (this.hud && typeof this.hud.destroyHUD === 'function') {
+            this.hud.destroyHUD();
+        }
+        // Remove comboText
+        if (this.comboText) {
+            this.comboText.destroy();
+            this.comboText = undefined;
+        }
+        // Remove player
+        if (this.player) {
+            this.player.destroy();
+        }
+        // Remove any other persistent objects as needed
     }
 }
 

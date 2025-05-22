@@ -10,7 +10,19 @@ func main() {
 	// Serve static files from the built client
 	distDir := "./client/dist"
 	fs := http.FileServer(http.Dir(distDir))
-	http.Handle("/", fs)
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		path := distDir + r.URL.Path
+		info, err := os.Stat(path)
+		if err == nil && !info.IsDir() {
+			// File exists, serve it
+			fs.ServeHTTP(w, r)
+			return
+		}
+		// Fallback: serve index.html for SPA routing
+		indexPath := distDir + "/index.html"
+		http.ServeFile(w, r, indexPath)
+	})
 
 	// Determine port
 	port := os.Getenv("PORT")

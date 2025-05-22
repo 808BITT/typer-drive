@@ -63,17 +63,28 @@ export abstract class BaseMob extends Phaser.GameObjects.Container implements IM
     this.destroy();
   }
 
+  protected renderBackground(): void {
+    // Subclasses can override to add backgrounds before text
+  }
+
   render(): void {
     // Clear any existing text objects
     this.textObjects.forEach(text => text.destroy());
     this.textObjects = [];
-    
+    // Clear any background objects (if needed in future)
+    // Call background hook before adding text
+    this.renderBackground();
     // Create new text objects for each letter
     this.letters.forEach((letter, index) => {
       const textObject = this.scene.add.text(index * 20, 0, letter, {
         fontSize: '24px',
-        color: index === this.currentLetterIndex ? '#ffffff' : '#aaaaaa'
+        color: index === this.currentLetterIndex ? '#ffffff' : '#aaaaaa',
+        fontFamily: 'monospace',
       });
+      // Add a black stroke for visibility
+      textObject.setStroke('#000000', 4);
+      // Add a subtle shadow for extra contrast
+      textObject.setShadow(2, 2, '#000000', 2, true, true);
       this.textObjects.push(textObject);
       this.add(textObject);
     });

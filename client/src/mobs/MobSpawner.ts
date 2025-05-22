@@ -24,6 +24,7 @@ export class MobSpawner {
   private wavesConfig: WaveConfig[] = [];
   private onWaveComplete: (waveNumber: number) => void;
   private mobTypePercentages: { letter: number; word: number } = { letter: 100, word: 0 };
+  private mobTypeWeights: { [type: string]: number } = {};
 
   // Word pools by difficulty
   private wordPools = {
@@ -165,6 +166,38 @@ export class MobSpawner {
       }
     }
     return mobs;
+  }
+
+  private pickMobType(): string {
+    const types = Object.keys(this.mobTypeWeights);
+    const weights = Object.values(this.mobTypeWeights);
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < types.length; i++) {
+      if (r < weights[i]) return types[i];
+      r -= weights[i];
+    }
+    return types[0];
+  }
+
+  private createMobConfig(): MobConfig {
+    const type = this.pickMobType();
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const letter = letters[Math.floor(Math.random() * letters.length)];
+    return {
+      id: `${type}-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+      letters: ['A'], // TODO: Replace with logic per mob type
+      speed: 100,
+      x: this.gameWidth,
+      y: Math.random() * this.gameHeight,
+      scene: this.scene
+    };
+  }
+
+  private spawnMob() {
+    const config = this.createMobConfig();
+    const mob = MobRegistry.createMob(config.id.split('-')[0], config);
+    this.activeMobs.set(mob.id, mob);
   }
 
   private spawnMobFromQueue(): void {

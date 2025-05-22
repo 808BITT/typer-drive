@@ -7,6 +7,12 @@ export class NormalLetterMob extends BaseMob {
     super(config);
   }
 
+  protected renderBackground(): void {
+    // Add a blue background rectangle for visibility
+    const bg = this.scene.add.rectangle(0, 0, 48, 48, 0x44aaff, 1).setOrigin(0, 0);
+    this.add(bg);
+  }
+
   onTyped(letter: any) {
     if (this.letters[this.currentLetterIndex] === letter) {
       // Correct key was typed
@@ -29,6 +35,13 @@ export class NormalLetterMob extends BaseMob {
 export class TankWordMob extends BaseMob {
   constructor(config: any) {
     super(config);
+  }
+
+  protected renderBackground(): void {
+    // Add a yellow background rectangle for visibility
+    const width = Math.max(48, this.letters.length * 20);
+    const bg = this.scene.add.rectangle(0, 0, width, 48, 0xffff00, 1).setOrigin(0, 0);
+    this.add(bg);
   }
 
   onTyped(letter: any) {
@@ -357,63 +370,6 @@ export class SplitWordMob extends BaseMob {
   }
 }
 
-export class StealthLetterMob extends BaseMob {
-  visibilityTimer: any;
-  isVisible: boolean;
-  visibilityDuration: number;
-
-  constructor(config: any) {
-    super(config);
-    this.visibilityTimer = null;
-    this.isVisible = true;
-    this.visibilityDuration = 500; // ms
-    
-    this.startVisibilityToggle();
-  }
-
-  onTyped(letter: any) {
-    // Can only be typed when visible
-    if (!this.isVisible) return false;
-    
-    if (this.letters[this.currentLetterIndex] === letter) {
-      // Correct key was typed
-      MobEffects.createHitEffect(this.scene, this.x, this.y);
-      MobEffects.createDestroyEffect(this.scene, this.x, this.y);
-      
-      // Award points
-      this.scene.events.emit('score-updated', 15); // More points due to difficulty
-      
-      // Destroy the mob
-      this.destroy();
-      return true;
-    }
-    
-    // Wrong key was typed
-    return false;
-  }
-
-  startVisibilityToggle() {
-    this.visibilityTimer = this.scene.time.addEvent({
-      delay: this.visibilityDuration,
-      callback: this.toggleVisibility,
-      callbackScope: this,
-      loop: true
-    });
-  }
-
-  toggleVisibility() {
-    this.isVisible = !this.isVisible;
-    this.setAlpha(this.isVisible ? 1 : 0);
-  }
-
-  destroy() {
-    if (this.visibilityTimer) {
-      this.visibilityTimer.remove();
-    }
-    super.destroy();
-  }
-}
-
 export class SpeedsterMob extends BaseMob {
   constructor(config: any) {
     // Speedster mobs move twice as fast
@@ -614,9 +570,11 @@ export class WordMob extends BaseMob {
 }
 
 // Register mob types after all class declarations
-MobRegistry.registerMob('normal-letter', NormalLetterMob);
-MobRegistry.registerMob('tank-word', TankWordMob);
-MobRegistry.registerMob('armored-letter', ArmoredLetterMob);
-MobRegistry.registerMob('shielded-word', ShieldedWordMob);
-MobRegistry.registerMob('regenerator', RegeneratorMob);
-MobRegistry.registerMob('split-word', SplitWordMob);
+MobRegistry.registerMob('NormalLetterMob', NormalLetterMob);
+MobRegistry.registerMob('TankWordMob', TankWordMob);
+MobRegistry.registerMob('ArmoredLetterMob', ArmoredLetterMob);
+MobRegistry.registerMob('ShieldedWordMob', ShieldedWordMob);
+MobRegistry.registerMob('RegeneratorMob', RegeneratorMob);
+MobRegistry.registerMob('SplitWordMob', SplitWordMob);
+// Removed StealthLetterMob class and its registration as it had invisible letters and is no longer needed.
+// Contains AI-generated edits.
